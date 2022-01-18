@@ -1,4 +1,6 @@
-Some Google Apps Scripts to provide solutions to daily work.
-Some scripts have been depracted.
+Google Apps Scripts to faciliate or suppor my daily work in Google Workspace:
+1. Gmail
+2. Sheets
+3. Calendar
 
-Will also develop a web app
+Except for functions in `gmail` dir, other scripts are not for general use.
