@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    	<style>
+  		* {
+  		  box-sizing: border-box;
+  		}
+
+  		body {
+		  font-family: Helvetica, sans-serif;
+		  font-size: 12pt;
+          color: #363534;
+  		}
+
+        .container {
+          margin: 5px 0;
+
+        }
+
+        label {
+        margin-bottom: 5px;
+
+        }
+
+        #wurl, #bar {
+          display: block;
+          height: 30px;
+          width: 100%;
+          border: 1pt solid #d1d0cd;
+          border-radius: 2px;
+        }
+
+        button {
+        display: block;
+        height: 36px;
+        width: 85px;
+        padding: 10px;
+        letter-spacing: 0.25px;
+
+
+        cursor: pointer;
+        border: 1px solid #fff;
+        border-radius: 4px;
+        background-color: #2a8947;
+        color: white;
+        margin-left: auto;
+        margin-right: auto;
+
+        }
+
+  	</style>
+  </head>
+  <body>
+   <div class="container">
+    <label for="url">WorldCat URL</label><br>
+    <input type="url" id="wurl"><br><br>
+    <label for="barcode">Barcode</label><br>
+    <input type="text" id="bar"><br><br>
+    <button id="btn">Submit</button>
+   </div>
+
+
+   <script>
+     document.getElementById('btn').addEventListener('click', getUserInput);
+
+     function getUserInput() {
+
+       var url = document.getElementById('wurl').value.toString();
+       var barcode = document.getElementById('bar').value.toString();
+
+       google.script.run.fetchWorldCat(url, barcode);
+     }
+   </script>
+  </body>
+</html>
