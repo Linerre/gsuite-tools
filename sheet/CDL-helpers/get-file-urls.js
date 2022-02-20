@@ -35,7 +35,7 @@ function addCircFileUrl()
   // the original titles/barcodes arrays are NOT sorted
   // so binary search is impossible
   // to find each title, the barcodes array needs to be looped through
-  // complexity: nO(n)
+  // complexity: O(n^2)
 
   // below is a rather bold try: search barcode in a joined long "title string", instead of the opposite
   // by doing so, only the barcodes array will be looped through for once only
