@@ -1,18 +1,21 @@
 /**
  * 
  * This script will automate the following steps:
- * 1. Look for Shanghai Order Report (weekly, Excel as attachment)
- * 2. Store the Excel to a specific Drive folder
+ * 1. Look for Shanghai Order Report (On Fris, with an Excel as attachment)
+ * 2. Store the Excel to a specific Drive folder (e.g Weekly Order Report)
  * 3. Convert it to Google Sheet
- * 4. Extract the needed columns and insert them into Books for KARMS shipping prioritized
- * 5. Notify YF once the above steps are done
+ * 4. Extract the needed columns from the sheet and insert them into 'Books for KARMS shipping prioritized'
+ * 5. Notify YF via email that the above steps are done
+ * 
+ * It is supposed to run only ONCE every day so there is NO need to worry about
+ * it will make any kind of duplicate checking
  * 
  * Author: Errelin
- * Last Change: 2022-02-21
+ * Last Change: 2022-02-23
  */
 
 // convert their types to `const' later
-let RPFILTER = {
+const RPFILTER = {
   FROM    : 'lib-dba@nyu.edu',
   TO      : 'me',
   SUBJ    : 'Shanghai Order Report',
@@ -26,31 +29,57 @@ let RPFILTER = {
  * 2. converted Google Sheet 
  * */ 
 
-let RPFOLDER = {
+const RPFOLDER = {
   ID      : '12XwFii9q5qTwS-8KUDxEdsmaGxOTNofS',
   NAME    : 'Weekly Order Report',
   OWNER   : 'zl37@nyu.edu'
 }
 
-let RPTEMPLATE = {
+const RPTEMPLATE = {
   ID      :  '1xbSkUrYQARf64c26BX291NHu530aCHqJQ8ZrnxtYIkE',
   NAME    :  '[Reprot-Template]',
   OWNER   :  'zl37@nyu.edu'
 }
 
+const SHIPFIRST = {
+  ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ', // change the ID to that of the one in use
+  OWNER   : 'zl37@nyu.edu',
+  // target tab where the extracted cols to be inserted
+  // INDEX is 0-based for easy use with arrays 
+  // NAME is subject to change
+  TARTAB  : {NAME: 'Sheet3', INDEX: 2} 
+}
 
+const NOTIFYBODY = {
+  cc       : 'zl37@nyu.edu',
+  name     : 'YF',
+  sender   : 'zl37@nyu.edu', // from whom a msg to send out
+  from     : 'zl37@nyu.edu', // change to YF's email later,
+  htmlBody : '<p>The weekly order report of this week has been processed and updated to Sheet3 on \
+              <a href="https://docs.google.com/spreadsheets/d/1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ/edit?usp=sharing">\
+              Books for KARMS shipping prioritized</a>\
+              </p>'
+  //replyTo  : 'zl37@nyu.edu',  // default to the user: me            
+}
+
+// Run daily
 /**
  * How to decide whether or not the report email has been checked?
  * 1. Use labels (+ isRead)
- * 2. Use colorful marks (purple star) */
+ * 2. Use colorful marks (purple star) 
+ * */
 function autoSaver() {
   // It should be impossible for the number of weekly report threads exceeds 100
   // Since I care the latest one ONLY, so 50 would be far more than enough
-  let threads = GmailApp.search(`newer_than:${RPFILTER.NWTH} has:attachment subject:Shanghai Order Report`, 0, 50);
+  let threads = GmailApp.search(`newer_than:3d has:attachment subject:Shanghai Order Report`, 0, 50);
+  if (threads.length < 1) {
+    Logger.log('No threads found meeting the search queary! Program terminates now');
+    return null;
+  }
   if (threads.length > 1) {Logger.log('Two threads found where only ONE is expected!')}
   Logger.log('Get %d threads in total', threads.length);
 
-
+  // The first contains the latest report
   let atts = threads[0].getMessages()[0].getAttachments();
   if (atts.length > 1) {Logger.log('More than ONE attachment are Found!')}
 
@@ -59,11 +88,14 @@ function autoSaver() {
   let weeklyReportExcelName = atts[0].getName(); 
   Logger.log('The report name is %s', weeklyReportExcelName);
 
-  // Store the Excel report to the specific Drive folder
+
+  
   try {
+    // Store the Excel report to the specific Drive folder; then
+    // Convert it to google sheet
     let targetFolder = DriveApp.getFolderById(RPFOLDER.ID);
     targetFolder.createFile(weeklyReportExcelBlob);
-    Logger.log('Successfully Added the order report Excel of this week!');
+    Logger.log('Successfully stored the order report Excel of this week!\nStarting to convert it to Google Sheet ...');
     
     // For more info: https://developers.google.com/drive/api/v2/reference/files/insert
     let config = {
@@ -72,28 +104,23 @@ function autoSaver() {
       mimeType: MimeType.GOOGLE_SHEETS
     };
 
+    let spreadsheet = Drive.Files.insert(config, weeklyReportExcelBlob);                
+    Logger.log('Converting DONE! The converted spreadsheet ID is %s', spreadsheet.id);
 
-    let spreadsheet = Drive.Files.insert(config, weeklyReportExcelBlob);
-                      
-    Logger.log(spreadsheet.id);
+    // Extract the needed columns from the excel-turned sheet
+    let shpsstUrl = colExtracter(spreadsheet.id);
 
+    NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
+              <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
+    // Notify YF everything is ready
+    notifyStatus(threads[0],NOTIFYBODY);
   } catch(err) {
     Logger.log(err);
   }
 }
 
-let SHIPFIRST = {
-  ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ',
-  OWNER   : 'zl37@nyu.edu',
-  // target tab where the extracted cols to be inserted
-  // INDEX is 0-based for easy use with arrays 
-  // NAME is subject to change
-  TARTAB  : {NAME: 'Sheet3', INDEX: 2} 
-}
 
-// Extract the needed columns from the excel-turned sheet
-function colExtracter() {
-  let spreadsheetID = '1f1hjGQyixI6JHHfNedo_D8qIv47cNImvwQPlY6ni0WA';
+function colExtracter(spreadsheetID) {
   // In case there are no sheets at all
   let srcSpreadsheet = SpreadsheetApp.openById(spreadsheetID);
   let sheets = srcSpreadsheet.getSheets();
@@ -108,8 +135,8 @@ function colExtracter() {
   let tmpSht = srcSpreadsheet.insertSheet('tmp');
 
   /**
-   * 1. Copy the needed columns to an adjacent sheet
-   * Need the following columns
+   * 1. Copy the needed columns to Books for KARMS shipping prioritized
+   * 
    * FROM: | Q-Z68_ORDER_NUMBER | B-Z13_TITLE | G-Z30_BARCODE | U-Z68_ORDER_STATUS_DATE_X | H-Z30_ITEM_PROCESS_STATUS | J-Z30_PROCESS_STATUS_DATE |
    *                  17               2             7                       21                         8                            10
    * TO:   | A-Z68_ORDER_NUMBER | B-Z13_TITLE | D-Z30_BARCODE | E-Z68_ORDER_STATUS_DATE_X | F-Z30_ITEM_PROCESS_STATUS | G-Z30_PROCESS_STATUS_DATE |
@@ -122,23 +149,37 @@ function colExtracter() {
     srcSht.getRange(srcCols[i]).copyTo(tmpSht.getRange(1,i+1));
   }
  
-  // Logger.log(srcSht.getSheetName());
-
-  let destSht = SpreadsheetApp.openById(SHIPFIRST.ID).getSheetByName(SHIPFIRST.TARTAB.NAME);
+  // Copy the tmp sheet to dest spreadsheet
+  let destSpreadsheet = SpreadsheetApp.openById(SHIPFIRST.ID);
+  let destSht = destSpreadsheet.getSheetByName(SHIPFIRST.TARTAB.NAME); // Sheet3
   
-  /**
-   * The for loop below is a typical error. 
-   * Correct and acceptable Time Complexity O(n) + wrong data structure
-   * leads to a disaster: 15 minutes to copy over simply ONE column of 3500+ records!
-   */
-  // for (let i = 0, n = testColVals.length; i < n; i++) {
-  //   destSht.getRange(i+1,1).setValue(testColVals[i][0]);
-  // }
-  //  let testColVals = srcSht.getRange(1,1,srcSht.getLastRow(),1).getValues(); 
-  // This does not work because of the following error:
-  // Exception: Target range and source range must be on the same spreadsheet.
-  // testCol.copyTo(destSht.getRange(1,1));
- 
-  Logger.log('DONE!')
+  Logger.log('Starting copying tmp sheet contents to the destination spreadsheet...')
+  // The copied sheet is named "Copy of [original name]".
+  let tmpSht3 = tmpSht.copyTo(destSpreadsheet);
+  Logger.log('Starting copying data from tmp sheet to Sheet3...')
+  
+  // Clear will remove the content on the first row
+  // Try to overwrite instead
+  // destSht.clear();
 
+  // Skip the Col C while copying data
+  tmpSht3.getRange('A2:B').copyTo(destSht.getRange('A2:B'));
+  tmpSht3.getRange('C2:F').copyTo(destSht.getRange('D2:G'));
+
+  Logger.log('Copying DONE!\nDeleting tmp sheet on dest spreadsheet...')
+  // delete tmp sheet
+  destSpreadsheet.deleteSheet(tmpSht3);
+
+  Logger.log('Deleting tmp sheet on src spreadsheet...')
+  srcSpreadsheet.deleteSheet(tmpSht);
+  
+  return destSpreadsheet.getUrl();
+
+}
+
+
+function notifyStatus(thread, config) {
+  // reply and add a mark: read or a label？
+  thread.reply('Placeholder text', config);
+  Logger.log('Processing Done. Notification sent')
 }
