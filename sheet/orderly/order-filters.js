@@ -1,8 +1,9 @@
 /**
  * Filter out unnecessary rows and copy the needed to 'Email Susan' Sheet
+ * In the future, Email Susan automatically
  * 
  * Author: Errelin
- * Last Change: 2022-02-22
+ * Last Change: 2022-02-24
  */
 
 // Type: sheet obj
@@ -15,7 +16,7 @@ let booksSht = ss.getSheetByName('Items');
  * The following line works as expected
  */
 // Type: Range
-let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
+// let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
 
 /**
  * The following two lines are identical
@@ -26,77 +27,163 @@ let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRow
 
 // Since the data is imported so this line will indeed copy over all the data ...
 // let headerRange = booksSht.getRange(1,1,1,3);
-
 // Type: filter
-let filter = orders.createFilter();
+// let filter = orders.createFilter();
 
 // Type: criteria
 // newFilterCriteira --> builder --> criteria
 // setHiddenValues tells the filter to filter out these values
 // (Blanks) == ''
 // Apply this filter to get all the items that are not CDLed and need to prioritize
-let ipsCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['','LT',]);
-let nonCDLCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['Y','N']);
+let nonCDLIpsCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['','LT',]);
+let nonCDLCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['Y','N', '']);
+
+// Yet to ship = CDL-ed but physical copies yet to be shipped
+let yetToShipIpsCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['LT']);
+let yetToShipCriteria = SpreadsheetApp.newFilterCriteria().setHiddenValues(['N','--', '']);
+
 let shippmentCriteria = SpreadsheetApp.newFilterCriteria().whenCellEmpty();
 let sbtOKCriteria = SpreadsheetApp.newFilterCriteria().whenCellEmpty();
 
+// Cols to apply the filter
 let isCDLCol = 4;
 let ipsColNum = 10;
 let sbtCol = 13;
 let shippmentCol = 14;
 
 
-function filterNonCDLOrders() {
-  filter.setColumnFilterCriteria(ipsColNum,ipsCriteria);
-  filter.setColumnFilterCriteria(isCDLCol,nonCDLCriteria);
-  filter.setColumnFilterCriteria(sbtCol,nonCDLCriteria);
-  filter.setColumnFilterCriteria(shippmentCol,shippmentCriteria);
-
-  /**
-   * The following line will not work however; neither will `let filteredRange = booksSht.getDataRange()`
-   * Both will instead copy all (including those filtered out) to the new sheet.
-   */
-  // get the filtered result
-  // let filteredRange = booksSht.getRange(1,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn())
-
+function filterOrders() {
   try {
+    
     // Method 1: Put new content under the old
     let emailSht = ss.getSheetByName('Email Susan');
     let lastTimeLeftAt = emailSht.getLastRow();
-    let today = new Date()
-    let tableHeaders = [['Title','Order Number','Order Created Date','IPS','Note']];
-    emailSht.getRange(lastTimeLeftAt+2,1).setValue('Email sent ' + today.toLocaleDateString());
-    emailSht.getRange(lastTimeLeftAt+3,1).setValue('1st Prioritize: Non-CDL titles');
-    emailSht.getRange(lastTimeLeftAt+4,1,1,5).setValues(tableHeaders);
 
-    orders.copyTo(emailSht.getRange(lastTimeLeftAt+5,1));
-
-    // remove filter
-    filter.remove();
-
-    // highlight 'OR' orders in magenta
-    highlightOR(emailSht,lastTimeLeftAt,0);
-  } finally {
-    filter.remove();
-  }
+    Logger.log('Starting to making headers for new data...')
   
+    // Setting up timestamp
+    let today = new Date();
+    emailSht.getRange(lastTimeLeftAt+2,1).setValue('Email sent ' + today.toLocaleDateString());
+    emailSht.getRange(lastTimeLeftAt+2,1).setFontWeight('Bold');
 
-  // copy filtered result to a new sheet
-  // let newSheet = ss.insertSheet();
-  // newSheet.setName("Email Susan");
-  // orders.copyTo(newSheet.getRange(2,1));
-}
+    // Setting up headers
+    emailSht.getRange(lastTimeLeftAt+3,1).setValue('1st Prioritize: Non-CDL titles');
+    emailSht.getRange(lastTimeLeftAt+3,6).setValue('2nd Prioritize: Non-CDL titles');
 
-function highlightOR(sheet,startpos,coloffset) {
-  let range = sheet.getRange(startpos+5, 4, sheet.getLastRow() - sheet.getFrozenRows(), 1);
-  let values = range.getValues();
-  let valuesNum = values.length;
-  for (var i = 0; i < valuesNum; i++) {
-    if (values[i][0] == 'OR') {
-      sheet.getRange(startpos+5+i, 4+coloffset).setBackground('magenta');
+    
+    Logger.log('The yeto ship CDL-ed titles should start at row %d', lastTimeLeftAt+4);
+
+    // Copying over yet to ship titles
+    getNonCDLTitles(emailSht, lastTimeLeftAt);
+    Logger.log('Highlighting OR status ...')
+    // highlight 'OR' orders in magenta or yellow
+    highlightOR(emailSht, lastTimeLeftAt, 1, 4);
+
+   
+    getYetToShipTitles(emailSht, lastTimeLeftAt);
+    // Highlight 'OR' and empty cells 
+    highlightOR(emailSht, lastTimeLeftAt, 6, 10);
+
+    Logger.log('Data ready for emailing Susan.');
+
+  } finally {
+    if (booksSht.getFilter()) {
+      booksSht.getFilter().remove();
+      Logger.log('Script terminated due to an error; Filter on Book Sheet has been removed.')
     }
   }
 }
+
+function getNonCDLTitles(targetSht, lastTimeLeftAt) {
+  // let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
+  let orders = booksSht.getDataRange();
+  let filter = orders.createFilter();
+  Logger.log('Start filtering CDL titles from all...');
+  // Get Non CDL titles (--)
+  filter.setColumnFilterCriteria(ipsColNum,nonCDLIpsCriteria);     // ['CT', 'GV', 'OR', 'LB']
+  filter.setColumnFilterCriteria(isCDLCol,nonCDLCriteria);         // --
+  filter.setColumnFilterCriteria(sbtCol,sbtOKCriteria);            // empty
+  filter.setColumnFilterCriteria(shippmentCol,shippmentCriteria);  // empty
+
+  let nonCDLOrderInfo = booksSht.getRange('A:C');
+  let nonCDLIPSInfo = booksSht.getRange('J:J');
+  nonCDLOrderInfo.copyTo(targetSht.getRange(lastTimeLeftAt+4,1));
+  nonCDLIPSInfo.copyTo(targetSht.getRange(lastTimeLeftAt+4,4));
+
+  // let nowLastRow = targetSht.getLastRow();
+  // Note Row
+  targetSht.getRange(lastTimeLeftAt+4,5).setValue('Note');
+  targetSht.getRange(lastTimeLeftAt+3,1,2,5).setFontWeight('Bold');
+  Logger.log('Non-CDL titles dat4 pasted')
+  
+  filter.remove();
+
+  return null;
+}
+
+function getYetToShipTitles(targetSht, startRow) {
+  let orders = booksSht.getDataRange();
+  // let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
+  let filter = orders.createFilter();
+  Logger.log('Start filtering Yet to CDL titles from all...');
+  // Get CDL-ed titles titles (--)
+  filter.setColumnFilterCriteria(ipsColNum,yetToShipIpsCriteria);
+  filter.setColumnFilterCriteria(isCDLCol,yetToShipCriteria);
+  filter.setColumnFilterCriteria(sbtCol,sbtOKCriteria);
+  filter.setColumnFilterCriteria(shippmentCol,shippmentCriteria);
+
+  // Will this also copy the filtered rows? No
+  let yetToShipOrderInfo = booksSht.getRange('A:D');
+  let yetToShipIPSInfo = booksSht.getRange('J:J');
+
+  yetToShipOrderInfo.copyTo(targetSht.getRange(startRow+4,6))  
+  yetToShipIPSInfo.copyTo(targetSht.getRange(startRow+4,10));
+
+  // Note Col
+  targetSht.getRange(startRow+4,11).setValue('Note');
+  targetSht.getRange(startRow+3,6,2,6).setFontWeight('Bold');
+  Logger.log('Yet to CDL titles data pasted')
+  
+  // remove fi
+  filter.remove();
+
+  return null;
+}
+
+function highlightOR(sheet, startRow, fromCol, toCol) {
+  let targetRange = sheet.getRange(startRow+5, fromCol, sheet.getLastRow(), toCol);
+  let targetValues = targetRange.getValues();
+  let targetValuesNum = targetValues.length;
+
+  /**
+   * Two possibilities: 
+   * 1. Non CDL titles: 5 cols and highlight the 4th col
+   * 2. Yet to ship CDL-ed titles: 6 cols and highlight the 5th col 
+   * */
+   
+  for (var i = 0; i < targetValuesNum; i++) {
+    if (toCol == 4) {
+      if (targetValues[i][0] !== '' && targetValues[i][toCol-1] == 'OR') {
+        sheet.getRange(startRow+5+i, toCol).setBackground('magenta');
+        Logger.log('Found IPS %s at row %d', targetValues[i][toCol-1], startRow+5+i);
+      } else if (targetValues[i][0] !== '' && targetValues[i][toCol-1] == '') {
+        sheet.getRange(startRowpos+5+i, toCol).setBackground('yellow');
+        Logger.log('Found empty IPS at row %d', startRow+5+i);
+      }
+    } 
+
+    if (toCol == 10) {
+      if (targetValues[i][0] !== '' && targetValues[i][toCol-6] == 'OR') {
+        sheet.getRange(startRow+5+i, toCol).setBackground('magenta');
+        Logger.log('Found IPS %s at row %d', targetValues[i][toCol-6], startRow+5+i);
+      } else if (targetValues[i][0] !== '' && targetValues[i][toCol-6] == '') {
+        sheet.getRange(startRow+5+i, toCol).setBackground('yellow');
+        Logger.log('Found empty IPS at row %d', startRow+5+i);
+      }
+    }
+  }
+}
+
 
 function method2() {
   // keep Col 1, 2, 3, 10
