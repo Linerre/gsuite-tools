@@ -3,7 +3,7 @@
  * In the future, Email Susan automatically
  * 
  * Author: Errelin
- * Last Change: 2022-02-24
+ * Last Change: 2022-02-25
  */
 
 // Type: sheet obj
@@ -53,8 +53,16 @@ let shippmentCol = 14;
 
 
 function filterOrders() {
+  // Record the current filter on Books Sheet
+  let currentFilter = booksSht.getFilter();
+  // SBT OK (Y/N) == '' (Blanks)
+  let currentSBTCriteria = currentFilter.getColumnFilterCriteria(13);
+  // SBT OK (Y/N)	Shipment # == '' (Blanks)
+  let currentShpCirteria = currentFilter.getColumnFilterCriteria(14);
+  // Disable the filter for now;
+  currentFilter.remove();
+
   try {
-    
     // Method 1: Put new content under the old
     let emailSht = ss.getSheetByName('Email Susan');
     let lastTimeLeftAt = emailSht.getLastRow();
@@ -68,7 +76,9 @@ function filterOrders() {
 
     // Setting up headers
     emailSht.getRange(lastTimeLeftAt+3,1).setValue('1st Prioritize: Non-CDL titles');
-    emailSht.getRange(lastTimeLeftAt+3,6).setValue('2nd Prioritize: Non-CDL titles');
+    emailSht.getRange(lastTimeLeftAt+3,1,1,4).mergeAcross().setHorizontalAlignment('center');
+    emailSht.getRange(lastTimeLeftAt+3,6).setValue('2nd Prioritize: CDL titles');
+    emailSht.getRange(lastTimeLeftAt+3,6,1,5).mergeAcross().setHorizontalAlignment('center');
 
     
     Logger.log('The yeto ship CDL-ed titles should start at row %d', lastTimeLeftAt+4);
@@ -86,18 +96,34 @@ function filterOrders() {
 
     Logger.log('Data ready for emailing Susan.');
 
+    Logger.log('Restoring the previous filter...');
+    let recoverFilter = booksSht.getRange(4,1,booksSht.getLastRow() - 3, booksSht.getLastColumn()).createFilter();
+    recoverFilter.setColumnFilterCriteria(13, currentSBTCriteria);
+    recoverFilter.setColumnFilterCriteria(14, currentShpCirteria);
+    Logger.log('DONE!');
+
   } finally {
-    if (booksSht.getFilter()) {
-      booksSht.getFilter().remove();
-      Logger.log('Script terminated due to an error; Filter on Book Sheet has been removed.')
+    // In case anything wrong and the original filter was disabled, restore it
+    if (booksSht.getFilter() == null ) {
+      // Bring the currentFilter back
+      let recoverFilter = booksSht.getDataRange().createFilter();
+      recoverFilter.setColumnFilterCriteria(13, currentSBTCriteria);
+      recoverFilter.setColumnFilterCriteria(14, currentShpCirteria);
+      Logger.log('The script terminated unexpectedly, but the original filter has been restored successfully');
     }
+    // if (booksSht.getFilter()) {
+    //   booksSht.getFilter().remove();
+    //   Logger.log('Script terminated due to an error; Filter on Book Sheet has been removed.')
+    // }
   }
 }
 
 function getNonCDLTitles(targetSht, lastTimeLeftAt) {
-  // let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
-  let orders = booksSht.getDataRange();
+  // There are three rows at the top and the header row is needed
+  let orders = booksSht.getRange(4,1,booksSht.getLastRow() - 3, booksSht.getLastColumn());
+  // let orders = booksSht.getDataRange();
   let filter = orders.createFilter();
+
   Logger.log('Start filtering CDL titles from all...');
   // Get Non CDL titles (--)
   filter.setColumnFilterCriteria(ipsColNum,nonCDLIpsCriteria);     // ['CT', 'GV', 'OR', 'LB']
@@ -105,8 +131,8 @@ function getNonCDLTitles(targetSht, lastTimeLeftAt) {
   filter.setColumnFilterCriteria(sbtCol,sbtOKCriteria);            // empty
   filter.setColumnFilterCriteria(shippmentCol,shippmentCriteria);  // empty
 
-  let nonCDLOrderInfo = booksSht.getRange('A:C');
-  let nonCDLIPSInfo = booksSht.getRange('J:J');
+  let nonCDLOrderInfo = booksSht.getRange('A4:C');
+  let nonCDLIPSInfo = booksSht.getRange('J4:J');
   nonCDLOrderInfo.copyTo(targetSht.getRange(lastTimeLeftAt+4,1));
   nonCDLIPSInfo.copyTo(targetSht.getRange(lastTimeLeftAt+4,4));
 
@@ -122,9 +148,11 @@ function getNonCDLTitles(targetSht, lastTimeLeftAt) {
 }
 
 function getYetToShipTitles(targetSht, startRow) {
-  let orders = booksSht.getDataRange();
-  // let orders = booksSht.getRange(2,1,booksSht.getLastRow() - booksSht.getFrozenRows(), booksSht.getLastColumn());
+  // There are three rows at the top and the header row is needed
+  let orders = booksSht.getRange(4,1,booksSht.getLastRow() - 3, booksSht.getLastColumn());
+  // let orders = booksSht.getDataRange();
   let filter = orders.createFilter();
+
   Logger.log('Start filtering Yet to CDL titles from all...');
   // Get CDL-ed titles titles (--)
   filter.setColumnFilterCriteria(ipsColNum,yetToShipIpsCriteria);
@@ -133,8 +161,8 @@ function getYetToShipTitles(targetSht, startRow) {
   filter.setColumnFilterCriteria(shippmentCol,shippmentCriteria);
 
   // Will this also copy the filtered rows? No
-  let yetToShipOrderInfo = booksSht.getRange('A:D');
-  let yetToShipIPSInfo = booksSht.getRange('J:J');
+  let yetToShipOrderInfo = booksSht.getRange('A4:D');
+  let yetToShipIPSInfo = booksSht.getRange('J4:J');
 
   yetToShipOrderInfo.copyTo(targetSht.getRange(startRow+4,6))  
   yetToShipIPSInfo.copyTo(targetSht.getRange(startRow+4,10));
