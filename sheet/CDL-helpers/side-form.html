@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    	<style>
+  		* {
+  		  box-sizing: border-box;
+  		}
+
+  		body {
+		    font-family: Helvetica, sans-serif;
+		    font-size: 12pt;
+        color: #363534;
+  		}
+
+      .form-container {
+        display: flex;
+        flex-direction: column;
+        margin: 5px 0;
+          
+      }
+
+      .fields {
+        display:flex;
+        /* flex-direction: ; */
+        align-items: center;
+        align-content: start-end;
+        gap: 15px;
+        font-size: 11pt;
+        margin-top: 10px;
+      }
+
+      .fields label {
+        width: 35%;
+      }
+
+      .fields input {
+        width: 55%;
+        font-size: 11pt;
+      }
+
+      button {
+        display: block;
+        height: 36px;
+        width: 85px;
+        padding: 10px;
+        letter-spacing: 0.25px;
+    
+        cursor: pointer;
+        border: 1px solid #fff;
+        border-radius: 4px;
+        background-color: #2a8947;
+        color: white;
+        margin-top: 20px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+
+  	</style>
+  </head>
+
+  <body>
+    <div class="form-container">
+      <div class="fields">
+        <label for="trow">Title Row</label>
+        <input type="number" id="trow" placeholder="e.g. 50" required>
+      </div>
+
+      <div class="fields">
+        <label for="netid">Patron NetID</label>
+        <input type="text" id="netid" placeholder="abc123" required pattern="[a-zA-Z]+\d+">
+      </div>
+
+      <div class="fields">
+        <label for="staff">Staff</label>
+        <input type="text" id="staff" placeholder="e.g. Leon" required>
+      </div>
+
+      <div class="fields">
+        <label for="coll">Collection</label>
+        <select name="coll" id="coll">
+          <option value="Main" name="MAIN">Main</option>
+          <option value="Reserves" name="RES">Reserves</option>
+          <option value="Chinese" name="CHIL">Chinese</option>
+          <option value="Career" name="CARE">Career</option>
+          <option value="Leisure" name="LEIS">Leisure</option>
+        </select>
+      </div>
+
+
+      <div class="fields">
+        <label for="due">Due Date</label>
+        <input type="date" name="due" id="due" value="2022-05-20">
+      </div>
+
+    </div>  
+    <button id="btn">LOAN</button>
+   </div>
+   
+   
+   <script>
+     document.getElementById('btn').addEventListener('click', loanCDLItem);
+     
+     function loanCDLItem() {
+      let trow = document.getElementById('trow').value;
+      let netid = document.getElementById('netid').value;
+      let staff = document.getElementById('staff').value;
+      let coll = document.getElementById('coll').value;
+      let due = document.getElementById('due').value.toString();
+
+      try {
+        // fn for loan; consider adding err handler later
+        google.script.run.loanCDL(trow, netid, staff, coll, due);
+
+        google.script.run.toast();
+
+        // clean the form
+        document.getElementById('trow').value = '';
+        document.getElementById('netid').value = '';
+        document.getElementById('staff').value = '';
+
+      } catch(e) {
+        Logger.log(e); 
+      }
+    }
+   </script>
+  </body>
+</html>
+
+
+
+
