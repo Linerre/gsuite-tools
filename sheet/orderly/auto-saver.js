@@ -11,16 +11,17 @@
  * it will make any kind of duplicate checking
  * 
  * Author: Errelin
- * Last Change: 2022-02-23
+ * Last Change: 2022-03-05
  */
 
 // convert their types to `const' later
 const RPFILTER = {
-  FROM    : 'lib-dba@nyu.edu',
+  FROM    : 'errelinaaron@gmail.com',
+  // FROM    : 'lib-dba@nyu.edu',
   TO      : 'me',
   SUBJ    : 'Shanghai Order Report',
   HAS     : ['attachment'],  // for future extensibility
-  NWTH    : '1d'
+  NWTH    : '7d'
 }
 
 /** 
@@ -30,7 +31,8 @@ const RPFILTER = {
  * */ 
 
 const RPFOLDER = {
-  ID      : '12XwFii9q5qTwS-8KUDxEdsmaGxOTNofS',
+  // ID      : '1_tjeJsVK62crqclh2t0M9awzOFRPq9GV', // Real
+  ID      : '12XwFii9q5qTwS-8KUDxEdsmaGxOTNofS', // My Test Drive
   NAME    : 'Weekly Order Report',
   OWNER   : 'zl37@nyu.edu'
 }
@@ -42,8 +44,11 @@ const RPTEMPLATE = {
 }
 
 const SHIPFIRST = {
-  ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ', // change the ID to that of the one in use
-  OWNER   : 'zl37@nyu.edu',
+  ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ',    // Test
+  // ID      : '1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE', // Real
+  URL     : 'https://docs.google.com/spreadsheets/d/1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE/edit?usp=sharing',
+  // ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ', // change the ID to that of the one in use
+  OWNER   : 'yz8212@nyu.edu',
   // target tab where the extracted cols to be inserted
   // INDEX is 0-based for easy use with arrays 
   // NAME is subject to change
@@ -51,15 +56,21 @@ const SHIPFIRST = {
 }
 
 const NOTIFYBODY = {
-  cc       : 'zl37@nyu.edu',
+  cc       : 'yz8212@nyu.edu,zl37@nyu.edu',
   name     : 'YF',
-  sender   : 'zl37@nyu.edu', // from whom a msg to send out
-  from     : 'zl37@nyu.edu', // change to YF's email later,
+  // from     : 'zl37@nyu.edu', // change to YF's email later,
+  from     : 'yz8212@nyu.edu', 
   htmlBody : '<p>The weekly order report of this week has been processed and updated to Sheet3 on \
               <a href="https://docs.google.com/spreadsheets/d/1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ/edit?usp=sharing">\
               Books for KARMS shipping prioritized</a>\
-              </p>'
-  //replyTo  : 'zl37@nyu.edu',  // default to the user: me            
+              </p>',
+  // this is the real one
+  // htmlBody  : '<p>The weekly order report of this week has been processed and updated to Sheet3 on \
+  //             <a href="https://docs.google.com/spreadsheets/d/1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE/edit?usp=sharing">\
+  //             Books for KARMS shipping prioritized</a>\
+  //             </p>',
+  replyTo  : 'zy8212@nyu.edu',  // default to the user: sender
+  // noReply    : true  // default to the user: sender           
 }
 
 // Run daily
@@ -71,7 +82,8 @@ const NOTIFYBODY = {
 function autoSaver() {
   // It should be impossible for the number of weekly report threads exceeds 100
   // Since I care the latest one ONLY, so 50 would be far more than enough
-  let threads = GmailApp.search(`newer_than:3d has:attachment subject:Shanghai Order Report`, 0, 50);
+  let queary = `from:${RPFILTER.FROM} newer_than:2d has:attachment subject:${RPFILTER.SUBJ}`;
+  let threads = GmailApp.search(queary, 0, 50);
   if (threads.length < 1) {
     Logger.log('No threads found meeting the search queary! Program terminates now');
     return null;
@@ -83,37 +95,40 @@ function autoSaver() {
   let atts = threads[0].getMessages()[0].getAttachments();
   if (atts.length > 1) {Logger.log('More than ONE attachment are Found!')}
 
-  let weeklyReportExcelBlob = atts[0].copyBlob(); // this var's life circle matters
-  // let weeklyReportExcelBlob = atts[0].getAs('GOOGLE_SHEETS'); // not supported
-  let weeklyReportExcelName = atts[0].getName(); 
-  Logger.log('The report name is %s', weeklyReportExcelName);
-
-
+  let weeklyRepExcelBlob = atts[0].copyBlob(); // this var's life circle matters
+  // let weeklyRepExcelBlob = atts[0].getAs('GOOGLE_SHEETS'); // not supported
   
   try {
     // Store the Excel report to the specific Drive folder; then
     // Convert it to google sheet
+    let today = new Date();
     let targetFolder = DriveApp.getFolderById(RPFOLDER.ID);
-    targetFolder.createFile(weeklyReportExcelBlob);
+    let weeklyRepExcel = targetFolder.createFile(weeklyRepExcelBlob);
+    let weeklyRepExcelNameOrig = weeklyRepExcel.getName(); // NYUSH ORDER_REPORT.xlsx
+    let weeklyRepExcelNameNew = weeklyRepExcelNameOrig.replace('.', ' - ' + today.toLocaleDateString() + '.'); // NYUSH ORDER_REPORT - DATE.xlsx
+    
+    weeklyRepExcel = weeklyRepExcel.setName(weeklyRepExcelNameNew); 
+    Logger.log('The report name is %s', weeklyRepExcel.getName());
+    // 2/25/2022-REPORT NAME
     Logger.log('Successfully stored the order report Excel of this week!\nStarting to convert it to Google Sheet ...');
     
     // For more info: https://developers.google.com/drive/api/v2/reference/files/insert
     let config = {
-      title: "[Google Sheets] Weekly " + weeklyReportExcelName,
+      title: "[Google Sheets] " + weeklyRepExcel.getName(),
       parents: [{id: RPFOLDER.ID}],
       mimeType: MimeType.GOOGLE_SHEETS
     };
 
-    let spreadsheet = Drive.Files.insert(config, weeklyReportExcelBlob);                
+    let spreadsheet = Drive.Files.insert(config, weeklyRepExcelBlob);                
     Logger.log('Converting DONE! The converted spreadsheet ID is %s', spreadsheet.id);
 
     // Extract the needed columns from the excel-turned sheet
     let shpsstUrl = colExtracter(spreadsheet.id);
 
-    NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
-              <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
-    // Notify YF everything is ready
-    notifyStatus(threads[0],NOTIFYBODY);
+    // NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
+    //           <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
+    // // Notify YF everything is ready
+    // notifyStatus(threads[0],NOTIFYBODY);
   } catch(err) {
     Logger.log(err);
   }
@@ -148,14 +163,18 @@ function colExtracter(spreadsheetID) {
   for (let i = 0, n = srcCols.length; i < n; i++) {
     srcSht.getRange(srcCols[i]).copyTo(tmpSht.getRange(1,i+1));
   }
- 
+  // Trim whitespace before copying the data to the readl Sheet3!!!!!!!!
+  tmpSht.getDataRange().trimWhitespace();
+
   // Copy the tmp sheet to dest spreadsheet
   let destSpreadsheet = SpreadsheetApp.openById(SHIPFIRST.ID);
   let destSht = destSpreadsheet.getSheetByName(SHIPFIRST.TARTAB.NAME); // Sheet3
   
   Logger.log('Starting copying tmp sheet contents to the destination spreadsheet...')
   // The copied sheet is named "Copy of [original name]".
+  // This copied sheet tab will not increase the number in sheet tab (e.g. sheet1, sheet2, sheet3, ...) 
   let tmpSht3 = tmpSht.copyTo(destSpreadsheet);
+  
   Logger.log('Starting copying data from tmp sheet to Sheet3...')
   
   // Clear will remove the content on the first row
