@@ -11,7 +11,7 @@
  * it will make any kind of duplicate checking
  * 
  * Author: Errelin
- * Last Change: 2022-03-05
+ * Last Change: 2022-03-06
  */
 
 // convert their types to `const' later
@@ -55,6 +55,12 @@ const SHIPFIRST = {
   TARTAB  : {NAME: 'Sheet3', INDEX: 2} 
 }
 
+const CDLINDEX = {
+  ID   :  '1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao',
+  URL  :  'https://docs.google.com/spreadsheets/d/1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao/edit?usp=sharing',
+  VEND :  {NAME: 'Vendor CDL', INDEX: 0}
+}
+
 const NOTIFYBODY = {
   cc       : 'yz8212@nyu.edu,zl37@nyu.edu',
   name     : 'YF',
@@ -82,7 +88,7 @@ const NOTIFYBODY = {
 function autoSaver() {
   // It should be impossible for the number of weekly report threads exceeds 100
   // Since I care the latest one ONLY, so 50 would be far more than enough
-  let queary = `from:${RPFILTER.FROM} newer_than:2d has:attachment subject:${RPFILTER.SUBJ}`;
+  let queary = `from:${RPFILTER.FROM} newer_than:3d has:attachment subject:${RPFILTER.SUBJ}`;
   let threads = GmailApp.search(queary, 0, 50);
   if (threads.length < 1) {
     Logger.log('No threads found meeting the search queary! Program terminates now');
@@ -105,12 +111,12 @@ function autoSaver() {
     let targetFolder = DriveApp.getFolderById(RPFOLDER.ID);
     let weeklyRepExcel = targetFolder.createFile(weeklyRepExcelBlob);
     let weeklyRepExcelNameOrig = weeklyRepExcel.getName(); // NYUSH ORDER_REPORT.xlsx
-    let weeklyRepExcelNameNew = weeklyRepExcelNameOrig.replace('.', ' - ' + today.toLocaleDateString() + '.'); // NYUSH ORDER_REPORT - DATE.xlsx
+    let weeklyRepExcelNameNew = weeklyRepExcelNameOrig.replace('.', '-' + today.toLocaleDateString() + '.'); // NYUSH ORDER_REPORT - DATE.xlsx
     
     weeklyRepExcel = weeklyRepExcel.setName(weeklyRepExcelNameNew); 
     Logger.log('The report name is %s', weeklyRepExcel.getName());
     // 2/25/2022-REPORT NAME
-    Logger.log('Successfully stored the order report Excel of this week!\nStarting to convert it to Google Sheet ...');
+    Logger.log('Successfully stored the order report Excel of this week!\nStart onverting it to Google Sheet ...');
     
     // For more info: https://developers.google.com/drive/api/v2/reference/files/insert
     let config = {
@@ -123,12 +129,17 @@ function autoSaver() {
     Logger.log('Converting DONE! The converted spreadsheet ID is %s', spreadsheet.id);
 
     // Extract the needed columns from the excel-turned sheet
-    let shpsstUrl = colExtracter(spreadsheet.id);
+    colExtracter(spreadsheet.id);
 
-    // NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
-    //           <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
-    // // Notify YF everything is ready
-    // notifyStatus(threads[0],NOTIFYBODY);
+    
+    // filter order and generate email to Susan in draft
+    let cdledCheckResult = filterCDLs();
+
+    // Notify YF everything is done
+    // draft is ready
+    // CDL Index result
+    // spreadsheet urls
+    notifier(cdledCheckResult);
   } catch(err) {
     Logger.log(err);
   }
@@ -170,12 +181,12 @@ function colExtracter(spreadsheetID) {
   let destSpreadsheet = SpreadsheetApp.openById(SHIPFIRST.ID);
   let destSht = destSpreadsheet.getSheetByName(SHIPFIRST.TARTAB.NAME); // Sheet3
   
-  Logger.log('Starting copying tmp sheet contents to the destination spreadsheet...')
+  Logger.log('Copying tmp sheet contents to the destination spreadsheet...')
   // The copied sheet is named "Copy of [original name]".
   // This copied sheet tab will not increase the number in sheet tab (e.g. sheet1, sheet2, sheet3, ...) 
   let tmpSht3 = tmpSht.copyTo(destSpreadsheet);
   
-  Logger.log('Starting copying data from tmp sheet to Sheet3...')
+  Logger.log('Copying data from tmp sheet to Sheet3...')
   
   // Clear will remove the content on the first row
   // Try to overwrite instead
@@ -197,8 +208,24 @@ function colExtracter(spreadsheetID) {
 }
 
 
+function notifier(cdledtable) {
+  let orderRep = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
+      <a href="${SHIPFIRST.URL}">Books for KARMS shipping prioritized</a></p>`;
+  let draftNoty = '<p>A message to Susan has been stored in your Draft with the title <strong>Orders to Check</strong></p>';
+  let cdlIndexRep = `<p>Before emailing Susan, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a></p>`;
+  let tableFooter = '</tbody></table>';
+  let wishing = '<p style="margin-top: 10px">Have a nice weekend, young lady :)</p>'
+  let notifyBody = orderRep + draftNoty + cdlIndexRep + cdledtable + tableFooter + wishing;
+  GmailApp.sendEmail('zl37@nyu.edu', 'Weekly Order Report DONE', 'Placeholder text', {from: 'zl37@nyu.edu', name: 'WEEKOR', htmlBody: notifyBody});
+}
+
 function notifyStatus(thread, config) {
   // reply and add a mark: read or a label？
   thread.reply('Placeholder text', config);
   Logger.log('Processing Done. Notification sent')
 }
+
+// NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
+    //           <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
+    // // Notify YF everything is ready
+    // notifyStatus(threads[0],NOTIFYBODY);
