@@ -4,7 +4,7 @@
  * record them on "Email Susan" sheet as well
  * 
  * Author: Errelin
- * Last Change: 2022-03-06
+ * Last Change: 2022-03-07
  */
 
 
@@ -36,7 +36,7 @@ function recordEmailSusanOrders (noncdl, cdled) {
 
     Logger.log('Start copying need-to-check Non-CDL orders ...')
     for (let i = 0, n = noncdl.length; i < n; i++) {
-      emailSht.getRange(lastTimeLeftAt+i+5,1,1,4).setValues([noncdl[i][0], noncdl[i][1], noncdl[i][2], noncdl[i][9]]);
+      emailSht.getRange(lastTimeLeftAt+i+5,1,1,4).setValues([[noncdl[i][0], noncdl[i][1], noncdl[i][2], noncdl[i][9]]]);
     }
     Logger.log('Start highlighting IPS of Non-CDL orders ...')
     highlightOR(emailSht, lastTimeLeftAt, 1, 4);
