@@ -35,49 +35,30 @@ const RPFOLDER = {
   ID      : '12XwFii9q5qTwS-8KUDxEdsmaGxOTNofS', // My Test Drive
   NAME    : 'Weekly Order Report',
   OWNER   : 'zl37@nyu.edu'
-}
-
-const RPTEMPLATE = {
-  ID      :  '1xbSkUrYQARf64c26BX291NHu530aCHqJQ8ZrnxtYIkE',
-  NAME    :  '[Reprot-Template]',
-  OWNER   :  'zl37@nyu.edu'
-}
+};
 
 const SHIPFIRST = {
   ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ',    // Test
   // ID      : '1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE', // Real
   URL     : 'https://docs.google.com/spreadsheets/d/1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE/edit?usp=sharing',
   // ID      : '1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ', // change the ID to that of the one in use
-  OWNER   : 'yz8212@nyu.edu',
   // target tab where the extracted cols to be inserted
   // INDEX is 0-based for easy use with arrays 
   // NAME is subject to change
   TARTAB  : {NAME: 'Sheet3', INDEX: 2} 
-}
+};
 
 const CDLINDEX = {
   ID   :  '1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao',
   URL  :  'https://docs.google.com/spreadsheets/d/1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao/edit?usp=sharing',
   VEND :  {NAME: 'Vendor CDL', INDEX: 0}
-}
+};
 
-const NOTIFYBODY = {
-  cc       : 'yz8212@nyu.edu,zl37@nyu.edu',
-  name     : 'YF',
-  // from     : 'zl37@nyu.edu', // change to YF's email later,
-  from     : 'yz8212@nyu.edu', 
-  htmlBody : '<p>The weekly order report of this week has been processed and updated to Sheet3 on \
-              <a href="https://docs.google.com/spreadsheets/d/1sDt-MQ8UNLC0XcL0nPcNi4DiPGgMKhClukhwTKxSXNQ/edit?usp=sharing">\
-              Books for KARMS shipping prioritized</a>\
-              </p>',
-  // this is the real one
-  // htmlBody  : '<p>The weekly order report of this week has been processed and updated to Sheet3 on \
-  //             <a href="https://docs.google.com/spreadsheets/d/1s-e91uQFsY-O0BfWoEBR8zNEYfysVgnsphmyS5dFcjE/edit?usp=sharing">\
-  //             Books for KARMS shipping prioritized</a>\
-  //             </p>',
-  replyTo  : 'zy8212@nyu.edu',  // default to the user: sender
-  // noReply    : true  // default to the user: sender           
-}
+const USERS = {
+  ME: 'zl37@nyu.edu',
+  YF: '',
+  NB: ''
+};
 
 // Run daily
 /**
@@ -88,7 +69,7 @@ const NOTIFYBODY = {
 function autoSaver() {
   // It should be impossible for the number of weekly report threads exceeds 100
   // Since I care the latest one ONLY, so 50 would be far more than enough
-  let queary = `from:${RPFILTER.FROM} newer_than:3d has:attachment subject:${RPFILTER.SUBJ}`;
+  let queary = `from:${RPFILTER.FROM} newer_than:7d has:attachment subject:${RPFILTER.SUBJ}`;
   let threads = GmailApp.search(queary, 0, 50);
   if (threads.length < 1) {
     Logger.log('No threads found meeting the search queary! Program terminates now');
@@ -139,7 +120,7 @@ function autoSaver() {
     // draft is ready
     // CDL Index result
     // spreadsheet urls
-    notifier(cdledCheckResult);
+    notifier(cdledCheckResult, USERS.ME, USERS.ME);
   } catch(err) {
     Logger.log(err);
   }
@@ -208,15 +189,19 @@ function colExtracter(spreadsheetID) {
 }
 
 
-function notifier(cdledtable) {
+function notifier(cdledtable, fromWhom, toWhom) {
   let orderRep = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
       <a href="${SHIPFIRST.URL}">Books for KARMS shipping prioritized</a></p>`;
   let draftNoty = '<p>A message to Susan has been stored in your Draft with the title <strong>Orders to Check</strong></p>';
   let cdlIndexRep = `<p>Before emailing Susan, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a></p>`;
   let tableFooter = '</tbody></table>';
-  let wishing = '<p style="margin-top: 10px">Have a nice weekend, young lady :)</p>'
+  let wishing = '<p style="margin-top: 10px">Have a nice weekend, young lady ٩(^ᴗ^)۶</p>'
   let notifyBody = orderRep + draftNoty + cdlIndexRep + cdledtable + tableFooter + wishing;
-  GmailApp.sendEmail('zl37@nyu.edu', 'Weekly Order Report DONE', 'Placeholder text', {from: 'zl37@nyu.edu', name: 'WEEKOR', htmlBody: notifyBody});
+  GmailApp.sendEmail(toWhom, 'Weekly Order Report DONE', 'Placeholder text', {
+    from: fromWhom, 
+    name: 'WEEKOR', 
+    htmlBody: notifyBody, 
+    noReply: true});
 }
 
 function notifyStatus(thread, config) {
@@ -224,8 +209,3 @@ function notifyStatus(thread, config) {
   thread.reply('Placeholder text', config);
   Logger.log('Processing Done. Notification sent')
 }
-
-// NOTIFYBODY.htmlBody = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
-    //           <a href="${shpsstUrl}">Books for KARMS shipping prioritized</a></p>`;
-    // // Notify YF everything is ready
-    // notifyStatus(threads[0],NOTIFYBODY);
