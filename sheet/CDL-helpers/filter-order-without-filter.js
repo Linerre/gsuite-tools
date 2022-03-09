@@ -36,13 +36,13 @@ function filterCDLs () {
   // Start checking and generating reports 
   Logger.log('Start constructing table body for non CDL titles ....');
   let nonCDL = checkDup(nonCDLItems,5);
-  let nonCDLRep = bodyTable(nonCDL, false);
+  let nonCDLRep = bodyTable(nonCDL, false); // could be <br>
 
   Logger.log('Start constructing table body for CDL-ed titles ....');
   let cdled = checkDup(cdledItems,6);
-  let cdledRep = bodyTable(cdled, true);
+  let cdledRep = bodyTable(cdled, true); // could be <br>
 
-  draftMaker([nonCDLRep, cdledRep], USERS.ME, USERS.NB);
+  draftMaker([nonCDLRep, cdledRep], USERS.YF, USERS.NB);
   Logger.log('Constructing DONE! Draft ready!');
   
   Logger.log('Start recording orders on Email Susan sheet ...')
@@ -105,18 +105,35 @@ function checkDup (items, colNum) {
 
 // Take body text, add headers, footers, make a draft
 function draftMaker (bodyList, fromWhom, toWhom) {
-  let greetingText = '<p>Hello Susan, </p><p>Could you please help check the following orders? Thank you.</p>';
-  let closingText = '<p>Best regards,<br>Yifei<p>';
-  let emailBody = greetingText + bodyList.join('<br>') + closingText;
-  
-  let drafts = GmailApp.getDrafts();
-  for (let i = 0, n = drafts.length; i < n; i++) {
-    if (drafts[i].getMessage().getSubject() == 'Orders to Check') {
-      Logger.log('Found old draft, updating ...')
-      drafts[i].update(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody})
-    }
+  let greetingText;
+  let closingText;
+  let emailBody;
+
+  if (bodyList[0] == '<br>' && bodyList[1] == '<br>') {
+    emailBody = '<p>There are no orders need chekcing with Susan this week.</p>';  
+  } else {
+    greetingText = '<p>Hello Susan, </p><p>Could you please help check the following orders? Thank you.</p>';
+    closingText = '<p>Best regards,<br>Yifei<p>';
+    emailBody = greetingText + bodyList.join('<br>') + closingText;
   }
-  // GmailApp.createDraft(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody});
+
+  let drafts = GmailApp.getDrafts();
+  if (drafts.length == 0) { // If no drafts at all, create one
+    GmailApp.createDraft(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody});
+  } else {
+    let counter = 0; // User may have some drafts but none of them has a subject like 'Orders to Check'
+    for (let i = 0, n = drafts.length; i < n; i++) {
+      if (drafts[i].getMessage().getSubject() == 'Orders to Check') {
+        Logger.log('Found old draft, updating ...')
+        drafts[i].update(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody})
+        counter += 1;
+        break;
+      }
+    }
+    if (counter == 0) { // If no such drafts as above, create one
+      GmailApp.createDraft(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody});
+    }
+  } 
 }
 
 function bodyTable (checklist, cdled) {
@@ -200,6 +217,10 @@ function bodyTable (checklist, cdled) {
 }
 
 function checkCDLIndex (checklist) {
+  if (checklist.length < 1) {
+    Logger.log('No CDL orders need checking this week');
+    return '<br>';
+  }
   let cdlIndexSht = SpreadsheetApp.openById(CDLINDEX.ID).getSheetByName(CDLINDEX.VEND.NAME);
   let orderNumsIndex= cdlIndexSht.getRange(3,11,cdlIndexSht.getLastRow() - 2, 1).trimWhitespace().getValues().filter(c => c[0].length > 0).map(c => c[0]);
   let tableHeader = '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;table-layout:fixed;width:900px">\
