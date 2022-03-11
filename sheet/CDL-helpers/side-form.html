@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    	<style>
-  		* {
-  		  box-sizing: border-box;
-  		}
+    <style>
+  	* {
+  	  box-sizing: border-box;
+	}
 
-  		body {
-		    font-family: Helvetica, sans-serif;
-		    font-size: 12pt;
-        color: #363534;
-  		}
+  	body {
+	  font-family: Helvetica, sans-serif;
+	  font-size: 12pt;
+          color: #363534;
+  	}
 
       .form-container {
         display: flex;
@@ -21,7 +21,6 @@
 
       .fields {
         display:flex;
-        /* flex-direction: ; */
         align-items: center;
         align-content: start-end;
         gap: 15px;
@@ -54,7 +53,13 @@
         margin-left: auto;
         margin-right: auto;
       }
+      sup {
+        color: red;
+      }
 
+      p {
+        margin-top: 20px;
+      }
 
   	</style>
   </head>
@@ -62,18 +67,18 @@
   <body>
     <div class="form-container">
       <div class="fields">
-        <label for="trow">Title Row</label>
-        <input type="number" id="trow" placeholder="e.g. 50" required>
+        <label for="trow">Title at Row<sup>*</sup></label>
+        <input type="number" id="trow" placeholder="50" required>
       </div>
 
       <div class="fields">
-        <label for="netid">Patron NetID</label>
+        <label for="netid">Patron NetID<sup>*</sup></label>
         <input type="text" id="netid" placeholder="abc123" required pattern="[a-zA-Z]+\d+">
       </div>
 
       <div class="fields">
-        <label for="staff">Staff</label>
-        <input type="text" id="staff" placeholder="e.g. Leon" required>
+        <label for="staff">Staff<sup>*</sup></label>
+        <input type="text" id="staff" placeholder="Leon" required>
       </div>
 
       <div class="fields">
@@ -93,8 +98,10 @@
         <input type="date" name="due" id="due" value="2022-05-20">
       </div>
 
-    </div>  
-    <button id="btn">LOAN</button>
+    </div> 
+
+      <button id="btn">LOAN</button>
+      <p> <span style="color:red;font-style:italic">*</span> indicates required fileds</p>
    </div>
    
    
@@ -126,7 +133,3 @@
    </script>
   </body>
 </html>
-
-
-
-
