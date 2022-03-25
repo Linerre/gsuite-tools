@@ -10,8 +10,10 @@
  * It is supposed to run only ONCE every day so there is NO need to worry about
  * it will make any kind of duplicate checking
  * 
+ * To debugg and test, turn on testing drive, spreadsheet and change YF to ME
+ * 
  * Author: Errelin
- * Last Change: 2022-03-06
+ * Last Change: 2022-03-25
  */
 
 // convert their types to `const' later
@@ -21,7 +23,7 @@ const RPFILTER = {
   TO      : 'me',
   SUBJ    : 'Shanghai Order Report',
   HAS     : ['attachment'],  // for future extensibility
-  NWTH    : '7d'
+  NWTH    : '6d'
 }
 
 /** 
@@ -56,7 +58,7 @@ const CDLINDEX = {
 
 const USERS = {
   ME: 'zl37@nyu.edu',
-  YF: '',
+  YF: 'yz8212@nyu.edu',
   NB: ''
 };
 
@@ -69,7 +71,7 @@ const USERS = {
 function autoSaver() {
   // It should be impossible for the number of weekly report threads exceeds 100
   // Since I care the latest one ONLY, so 50 would be far more than enough
-  let queary = `from:${RPFILTER.FROM} newer_than:7d has:attachment subject:${RPFILTER.SUBJ}`;
+  let queary = `from:${RPFILTER.FROM} newer_than:6d has:attachment subject:${RPFILTER.SUBJ}`;
   let threads = GmailApp.search(queary, 0, 50);
   if (threads.length < 1) {
     Logger.log('No threads found meeting the search queary! Program terminates now');
@@ -114,13 +116,13 @@ function autoSaver() {
 
     
     // filter order and generate email to Susan in draft
-    let cdledCheckResult = filterCDLs();
+    let tables = filterCDLs();
 
     // Notify YF everything is done
     // draft is ready
     // CDL Index result
     // spreadsheet urls
-    notifier(cdledCheckResult, USERS.ME, USERS.ME);
+    notifier(tables.CDLTABLE, tables.DRAFT, USERS.ME, USERS.ME);
   } catch(err) {
     Logger.log(err);
   }
@@ -144,14 +146,14 @@ function colExtracter(spreadsheetID) {
   /**
    * 1. Copy the needed columns to Books for KARMS shipping prioritized
    * 
-   * FROM: | Q-Z68_ORDER_NUMBER | B-Z13_TITLE | G-Z30_BARCODE | U-Z68_ORDER_STATUS_DATE_X | H-Z30_ITEM_PROCESS_STATUS | J-Z30_PROCESS_STATUS_DATE |
+   * FROM: | W-Z68_ORDER_NUMBER | B-Z13_TITLE | G-Z30_BARCODE | AA-Z68_ORDER_STATUS_DATE_X | H-Z30_ITEM_PROCESS_STATUS | M-Z30_PROCESS_STATUS_DATE |
    *                  17               2             7                       21                         8                            10
    * TO:   | A-Z68_ORDER_NUMBER | B-Z13_TITLE | D-Z30_BARCODE | E-Z68_ORDER_STATUS_DATE_X | F-Z30_ITEM_PROCESS_STATUS | G-Z30_PROCESS_STATUS_DATE |
    *                  1                2             3                       4                          5                             6 
    * 
    * 2. Copy the entire sheet to the dest spreadsheet
    */
-  let srcCols = ['Q:Q', 'B:B', 'G:G', 'U:U', 'H:H', 'J:J'];
+  let srcCols = ['W:W', 'B:B', 'G:G', 'AA:AA', 'H:H', 'M:M'];
   for (let i = 0, n = srcCols.length; i < n; i++) {
     srcSht.getRange(srcCols[i]).copyTo(tmpSht.getRange(1,i+1));
   }
@@ -189,23 +191,28 @@ function colExtracter(spreadsheetID) {
 }
 
 
-function notifier(cdledtable, fromWhom, toWhom) {
+function notifier(cdledtable, draftBody, fromWhom, toWhom) {
   let orderRep = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
       <a href="${SHIPFIRST.URL}">Books for KARMS shipping prioritized</a></p>`;
-  let draftNoty = '<p>A message to Susan has been stored in your Draft with the title <strong>Orders to Check</strong></p>';
-  let cdlIndexRep = `<p>Before emailing Susan, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a></p>`;
+  let draftNoty = '<p>A message to Susan has been stored or updated in your Draft with the title <strong>Orders to Check</strong>.</p>';
+  let noOrderNoty = '<p>There are <b>no</b> Non-CDL orders to check with Susan this week.</p>';
+  let cdlIndexRep = '<p>There are <b>no</b> CDL orders to check with Susan this week.</p>'; 
   let tableFooter = '</tbody></table>';
-  let wishing = '<p style="margin-top: 10px">Have a nice weekend, young lady ٩(^ᴗ^)۶</p>'
-  let notifyBody = orderRep + draftNoty + cdlIndexRep + cdledtable + tableFooter + wishing;
+  let wishing = '<p style="margin-top: 20px">Have a nice weekend, young lady ٩(^ᴗ^)۶</p>'
+
+  if (cdledtable !== '<br>') {
+    cdlIndexRep = `<p>Before emailing Susan, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a></p>`;
+  };
+
+  if (draftBody != '<br><br><br>') {
+    noOrderNoty = '<p>The following Non-CDL orders need to be checked with Susan. They are <b>already in your Draft</b></p>'
+  }
+
+  let notifyBody = orderRep + draftNoty + noOrderNoty + draftBody + cdlIndexRep + cdledtable + tableFooter + wishing;
   GmailApp.sendEmail(toWhom, 'Weekly Order Report DONE', 'Placeholder text', {
-    from: fromWhom, 
+    from: fromWhom,
+    cc: USERS.ME,
     name: 'WEEKOR', 
     htmlBody: notifyBody, 
     noReply: true});
-}
-
-function notifyStatus(thread, config) {
-  // reply and add a mark: read or a label？
-  thread.reply('Placeholder text', config);
-  Logger.log('Processing Done. Notification sent')
 }
