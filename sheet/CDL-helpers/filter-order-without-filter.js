@@ -3,7 +3,7 @@
  * Filter out unnecessary rows and copy the needed to 'Email Susan' Sheet
  * 
  * Author: Errelin
- * Last Change: 2022-03-09
+ * Last Change: 2022-03-25
  */
 
 
@@ -23,11 +23,11 @@ function filterCDLs () {
   let cdlIPS = ['CT', 'GV', 'OR', 'LB'];
   for (let i = 0, n = items.length; i < n; i++) {
     let item = items[i]
-    if (item[3] == '--' && cdlIPS.includes(item[9]) && item[12] == '' && item[13] == '') {
+    if (item[3] == '--' && cdlIPS.includes(item[8]) && item[12] == '' && item[13] == '') {
       nonCDLItems.push(item);
     }
 
-    if (item[3] == 'Y' && (cdlIPS.includes(item[9]) || item[9] == '') && item[12] == '' && item[13] == '') {
+    if (item[3] == 'Y' && (cdlIPS.includes(item[8]) || item[8] == '') && item[12] == '' && item[13] == '') {
       cdledItems.push(item)
     }
   }
@@ -42,7 +42,7 @@ function filterCDLs () {
   let cdled = checkDup(cdledItems,6);
   let cdledRep = bodyTable(cdled, true); // could be <br>
 
-  draftMaker([nonCDLRep, cdledRep], USERS.YF, USERS.NB);
+  let draftBody = draftMaker([nonCDLRep, cdledRep], USERS.ME, USERS.NB);
   Logger.log('Constructing DONE! Draft ready!');
   
   Logger.log('Start recording orders on Email Susan sheet ...')
@@ -50,7 +50,8 @@ function filterCDLs () {
   
   Logger.log('DONE! Check out Susan sheet')
   let cdlCheckResult = checkCDLIndex(cdled); // get a table about CDL Index
-  return cdlCheckResult;
+
+  return {CDLTABLE: cdlCheckResult, DRAFT: draftBody};
 
 }
 
@@ -107,13 +108,13 @@ function checkDup (items, colNum) {
 function draftMaker (bodyList, fromWhom, toWhom) {
   let greetingText;
   let closingText;
-  let emailBody;
+  let emailBody = '';
 
   if (bodyList[0] == '<br>' && bodyList[1] == '<br>') {
-    emailBody = '<p>There are no orders need chekcing with Susan this week.</p>';  
+    emailBody = '<p>There are no orders that need checking with Susan this week.</p>';  
   } else {
-    greetingText = '<p>Hello Susan, </p><p>Could you please help check the following orders? Thank you.</p>';
-    closingText = '<p>Best regards,<br>Yifei<p>';
+    greetingText = '<p>Hello Susan, </p><p>Here are the new titles that we would prefer to prioritize.</p>';
+    closingText = '<p>Thank you in advance for your help!<br><br>All the best,<br>Yifei<p>';
     emailBody = greetingText + bodyList.join('<br>') + closingText;
   }
 
@@ -133,7 +134,9 @@ function draftMaker (bodyList, fromWhom, toWhom) {
     if (counter == 0) { // If no such drafts as above, create one
       GmailApp.createDraft(toWhom, 'Orders to Check', 'Placeholder Text', {from: fromWhom, htmlBody: emailBody});
     }
-  } 
+  }
+
+  return bodyList.join('<br>'); 
 }
 
 function bodyTable (checklist, cdled) {
@@ -174,12 +177,12 @@ function bodyTable (checklist, cdled) {
   if (colNum == 5) {
     // Non CDL titles
     for (let i = 0, n = checklist.length; i < n; i++) {
-      if (checklist[i][9].trim() == 'OR') {
+      if (checklist[i][8].trim() == 'OR') {
         rows += `<tr><td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td><td>${checklist[i][1]}</td>\
-        <td>${checklist[i][2].toString()}</td><td style="background-color:#FF00FF">${checklist[i][9]}</td><td></td></tr>`;
+        <td>${checklist[i][2].toString()}</td><td style="background-color:#FF00FF">${checklist[i][8]}</td><td></td></tr>`;
       } else {
         rows += `<tr><td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td><td>${checklist[i][1]}</td>\
-        <td>${checklist[i][2].toString()}</td><td>${checklist[i][9]}</td><td>${checklist[i][14]}</td></tr>`;
+        <td>${checklist[i][2].toString()}</td><td>${checklist[i][8]}</td><td>${checklist[i][14]}</td></tr>`;
       }
     }
     let emailHeader = '<p><strong>1st Prioritize: Non-CDL titles</strong><p>';
@@ -191,13 +194,13 @@ function bodyTable (checklist, cdled) {
   if (colNum == 6) {
     // CDL-ed titles
     for (let i = 0, n = checklist.length; i < n; i++) {
-      if (checklist[i][9].trim() == 'OR') {
+      if (checklist[i][8].trim() == 'OR') {
         rows += `<tr>\
         <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
         <td>${checklist[i][1]}</td>\
         <td>${checklist[i][2].toString()}</td>\
         <td>${checklist[i][3]}</td>\
-        <td style="background-color:#FF00FF">${checklist[i][9]}</td>\
+        <td style="background-color:#FF00FF">${checklist[i][8]}</td>\
         <td>${checklist[i][14]}</td></tr>`;
       } else {
          rows += `<tr>\
@@ -205,7 +208,7 @@ function bodyTable (checklist, cdled) {
          <td>${checklist[i][1]}</td>\
          <td>${checklist[i][2].toString()}</td>\
          <td>${checklist[i][3]}</td>\
-         <td>${checklist[i][9]}</td>\
+         <td>${checklist[i][8]}</td>\
          <td>${checklist[i][14]}</td></tr>`;
       }
     }
@@ -243,7 +246,7 @@ function checkCDLIndex (checklist) {
       <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
       <td>${checklist[i][1]}</td><td>${checklist[i][2]}</td>\
       <td>${checklist[i][3]}</td>\
-      <td style="background-color:yellow">${checklist[i][9]}</td>\
+      <td style="background-color:yellow">${checklist[i][8]}</td>\
       <td></td></tr>`;
     }
   }
