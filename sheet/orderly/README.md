@@ -17,7 +17,7 @@ The orders that need double checking usually fall into one of the folliwng cases
 Sometimes, there are other tricky situations in which she needs to figure out what on earth is going on.
 
 ## Solution
-The scripts under `orderly`, plus [filter-order-without-filter.js](https://github.com/Linerre/gsuite-tools/blob/master/sheet/CDL-helpers/filter-order-without-filter.js), automate the above steps for her.
+The scripts under `orderly` automate the above steps for her.
 
 The entry point function is [`autoSaver()`](https://github.com/Linerre/gsuite-tools/blob/2f6364f07fd043b12e180a2c1cce82cbbf4f9a1a/sheet/orderly/auto-saver.js#L71) which runs during 12:00-1:00 PM on Fridays, roughly after the report is sent to us at noon. 
 
