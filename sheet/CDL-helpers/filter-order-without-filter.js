@@ -3,7 +3,7 @@
  * Filter out unnecessary rows and copy the needed to 'Email Susan' Sheet
  * 
  * Author: Errelin
- * Last Change: 2022-03-25
+ * Last Change: 2022-03-28
  */
 
 
@@ -20,7 +20,7 @@ function filterCDLs () {
 
   let nonCDLItems = [];
   let cdledItems = [];
-  let cdlIPS = ['CT', 'GV', 'OR', 'LB'];
+  let cdlIPS = ['CT', 'GV', 'OR', 'LB', '#N/A'];
   for (let i = 0, n = items.length; i < n; i++) {
     let item = items[i]
     if (item[3] == '--' && cdlIPS.includes(item[8]) && item[12] == '' && item[13] == '') {
@@ -113,7 +113,7 @@ function draftMaker (bodyList, fromWhom, toWhom) {
   if (bodyList[0] == '<br>' && bodyList[1] == '<br>') {
     emailBody = '<p>There are no orders that need checking with Susan this week.</p>';  
   } else {
-    greetingText = '<p>Hello Susan, </p><p>Here are the new titles that we would prefer to prioritize.</p>';
+    greetingText = '<p>Hello Susan, </p><p>Here are the titles that we would prefer to prioritize.</p>';
     closingText = '<p>Thank you in advance for your help!<br><br>All the best,<br>Yifei<p>';
     emailBody = greetingText + bodyList.join('<br>') + closingText;
   }
@@ -155,17 +155,17 @@ function bodyTable (checklist, cdled) {
   }
 
   let tableHeader = cdled ? 
-  '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;table-layout:fixed;width:900px">\
+  '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;">\
   <tbody><tr>\
   <th>Title</th>\
-  <th>Order Num</th>\
+  <th>Order Number</th>\
   <th>Order Create Date</th>\
   <th>CDL-ed(Y/N/--)</th>\
   <th>IPS</th><th>NOTE</th></tr>' : 
-  '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666">\
+  '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;">\
   <tbody><tr>\
   <th>Title</th>\
-  <th>Order Num</th>\
+  <th>Order Number</th>\
   <th>Order Create Date</th>\
   <th>IPS</th>\
   <th>NOTE</th></tr>';  
@@ -178,11 +178,29 @@ function bodyTable (checklist, cdled) {
     // Non CDL titles
     for (let i = 0, n = checklist.length; i < n; i++) {
       if (checklist[i][8].trim() == 'OR') {
-        rows += `<tr><td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td><td>${checklist[i][1]}</td>\
-        <td>${checklist[i][2].toString()}</td><td style="background-color:#FF00FF">${checklist[i][8]}</td><td></td></tr>`;
-      } else {
-        rows += `<tr><td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td><td>${checklist[i][1]}</td>\
-        <td>${checklist[i][2].toString()}</td><td>${checklist[i][8]}</td><td>${checklist[i][14]}</td></tr>`;
+        rows += `<tr>\
+        <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
+        <td>${checklist[i][1]}</td>\
+        <td>${checklist[i][2].toString()}</td>\
+        <td style="background-color:#FF00FF">${checklist[i][8]}</td>\
+        <td></td>\
+        </tr>`;
+      } else if (checklist[i][8].trim() == '#N/A') {
+        rows += `<tr>\
+        <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
+        <td>${checklist[i][1]}</td>\
+        <td>${checklist[i][2].toString()}</td>\
+        <td style="background-color:#EA9999">${checklist[i][8]}</td>\
+        <td></td>\
+        </tr>`;
+      }  else {
+        rows += `<tr>\
+        <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
+        <td>${checklist[i][1]}</td>\
+        <td>${checklist[i][2].toString()}</td>\
+        <td>${checklist[i][8]}</td>\
+        <td>${checklist[i][14]}</td>\
+        </tr>`;
       }
     }
     let emailHeader = '<p><strong>1st Prioritize: Non-CDL titles</strong><p>';
@@ -201,6 +219,14 @@ function bodyTable (checklist, cdled) {
         <td>${checklist[i][2].toString()}</td>\
         <td>${checklist[i][3]}</td>\
         <td style="background-color:#FF00FF">${checklist[i][8]}</td>\
+        <td>${checklist[i][14]}</td></tr>`;
+      } else if (checklist[i][8].trim() == '#N/A') {
+        rows += `<tr>\
+        <td style="width:450px;word-wrap:break-word">${checklist[i][0]}</td>\
+        <td>${checklist[i][1]}</td>\
+        <td>${checklist[i][2].toString()}</td>\
+        <td>${checklist[i][3]}</td>\
+        <td style="background-color:#EA9999">${checklist[i][8]}</td>\
         <td>${checklist[i][14]}</td></tr>`;
       } else {
          rows += `<tr>\
@@ -226,11 +252,11 @@ function checkCDLIndex (checklist) {
   }
   let cdlIndexSht = SpreadsheetApp.openById(CDLINDEX.ID).getSheetByName(CDLINDEX.VEND.NAME);
   let orderNumsIndex= cdlIndexSht.getRange(3,11,cdlIndexSht.getLastRow() - 2, 1).trimWhitespace().getValues().filter(c => c[0].length > 0).map(c => c[0]);
-  let tableHeader = '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;table-layout:fixed;width:900px">\
+  let tableHeader = '<table border="1px" cellpadding="5px" style="border-collapse:collapse;border-color:#666;">\
   <tbody><tr>\
   <th>Row</th>\
   <th>Title</th>\
-  <th>Order Num</th>\
+  <th>Order Number</th>\
   <th>Order Create Date</th>\
   <th>CDL-ed(Y/N/--)</th>\
   <th>IPS</th>\
