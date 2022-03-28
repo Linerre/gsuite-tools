@@ -14,7 +14,7 @@ The orders that need double checking usually fall into one of the folliwng cases
 1. The book needs to be scanned, but there seems something wrong. For example, it has been scanned but yet to deliever to us;
 2. The book needs to be shipped to us but there is no update on the shipping
 
-Sometimes, there are other tricky situations in which she need to figure out what on earth is going on.
+Sometimes, there are other tricky situations in which she needs to figure out what on earth is going on.
 
 ## Solution
 The scripts under `orderly`, plus [filter-order-without-filter.js](https://github.com/Linerre/gsuite-tools/blob/master/sheet/CDL-helpers/filter-order-without-filter.js), automate the above steps for her.
