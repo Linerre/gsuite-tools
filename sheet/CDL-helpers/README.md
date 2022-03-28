@@ -88,7 +88,7 @@ Speaking of checking out a CDL item, more specifically, a PDF file stored in Goo
 
 As you can see, there is quite some copying-and-pasting work, boring, tedious, error-prone. 
 
-Indeed, I have did a simple test: ask each of two junior asscoiates to perform two loans. It took them 6.5 minutes for each loan. What if they need to carry out 10 loans in an afternoon?
+Indeed, I have did a simple test: ask each of two junior asscoiates to perform two loans. It took them 6.5 minutes on average for each loan. What if they need to carry out 10 loans in an afternoon?
 
 ### Solution
 I created a GUI for automating all the steps above:
@@ -99,4 +99,4 @@ The only needed information is the first three fields:
 2. What's the patron's ID?
 3. Who is doing this operation? (Staff initials)
 
-Then, be it the eamil notification, sharing the file, or recording the loan, all has been automated.
+Then, be it sending the eamil notification, sharing the file, or recording the loan, all has been automated. The run of the script takes about 10 seconds.
