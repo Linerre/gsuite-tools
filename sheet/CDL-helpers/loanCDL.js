@@ -1,3 +1,10 @@
+/**
+ * The entry point function which loans a CDL item and record the loan.
+ * Author: Errelin <zl37@nyu.edu>
+ * Last Change: 2022-05-11
+ */
+
+
 function loanCDL(trow, netid, staff, coll, dueDate) {
   let fileUrl = vendorCDLSheet.getRange(trow, 5).getValue();
   let title = vendorCDLSheet.getRange(trow, 6).getValue();
@@ -31,6 +38,8 @@ function loanCDL(trow, netid, staff, coll, dueDate) {
   notifyPatron(patronEmail, title, author, fileUrl, dueDate + dueTime);
   recordLoan(fileUrl, dueDate + dueTime, fileName, barcode, patronEmail, coll, staff);
 
+  // also record the due date on vendor sheet at the same time for convenience
+  vendorCDLSheet.getRange(trow,3).setValue(dueDate);
   Logger.log('DONE! Due date is %s', dueDate + dueTime);
   
 }
