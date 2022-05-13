@@ -1,24 +1,24 @@
 /*
  * There are two types of barcodes for CDL files:
- * 1. temporary, 10-digit long, e.g.: 7183459-10
- * 2. permanent, 14-digit long, e.g.: 31124063877456
- *
+ * 1. temporary, 10-digit long: 7183459-10
+ * 2. permanent, 14-digit long: 31124063877456
+ * 
  * When a CDL file is ready, its barcode is very likely to be the 1st one.
- * And a while later it will be updated in catalog to become the 2nd type.
- * When such a change is made, it will be also sync-ed on the tracking and index spreadsheet.
+ * And a while later it will be updated in catalog to become the 2nd type. 
+ * When such a change is made, it may be updated manually on the index spreadsheet.
  * However, it will NOT be sync-ed to the CDL filenames in the Drive.
- * This script tries to solve the problem and reduce the manual work of sync-ing to zero.
+ * This script tries to solve the problem and reduce the manual work of sync-ing.
  *
- * Author: Errelin
- * Date: 2021-3-23
+ * Author: Errelin <zl37@nyu.edu>
+ * Date: 2022-05-13
  */
 
-function updateFileBarcode()
+function updateFileBarcode() 
 {
   /** Rely on barcodes rather than filenames because:
    * 1. Filenames are given rather arbitrarily;
    * 2. Even for the same book, its filename on the spreadsheet differs from that in the drive.
-   *
+   * 
    * Algorithm:
    * for each_barcode on the_spreadsheet
    *  if (current_barcode_on_spreadsheet !exists in the_drive)
@@ -50,14 +50,15 @@ function updateFileBarcode()
     if ((barcodes[i].length < 5) || (barcodes[i] > 5 && circUrlVendorSheet[i] == '')) {
       // Logger.log('No barcode or no vendor file block gets executed');
       Logger.log(
-        'File at row %d has not been uploaded to Drive or the order was cancelled.\nFile title is %s',
-        i+2,
+        'File at row %d has not been uploaded to Drive or the order was cancelled. \nIt could also be a DVD.\nFile title is %s', 
+        i+2, 
         vendorTitles[i]
         );
     }
     // if circUrl, barcode exits on sheet, but barcode not in drive, then update the barcode in drive using that on sheet
     // TODO: may need to extend barcode length to 14 digits
-    if (circUrlVendorSheet[i] != '' && barcodes[i].length > 5 && barcodeUrl[barcodes[i]] == undefined) {
+    // URL column could contain a slash, so check its content length instead of if it is empty
+    if (circUrlVendorSheet[i].length > 10 && barcodes[i].length > 5 && barcodeUrl[barcodes[i]] == undefined) {
       var fileType = (circUrlVendorSheet[i].search(/file\/d/) > 0) ? 'file' : 'folder';
       var fileOrFolderId = circUrlVendorSheet[i].match(/[-\w]{25,}/);
       logSwitch++;
@@ -66,7 +67,7 @@ function updateFileBarcode()
       if (fileType == 'file') {
         var file = DriveApp.getFileById(fileOrFolderId);
         var oldFilename = file.getName();
-        Logger.log('Found updated barcode %s at row %d', barcodes[i], i+2);
+        Logger.log('Found updated file barcode %s at row %d', barcodes[i], i+3);
         Logger.log('Old filename is %s', oldFilename);
 
         // update filename
@@ -75,7 +76,7 @@ function updateFileBarcode()
         Logger.log('Barcode updated and now filename is %s', newFilename);
       } else if (fileType == 'folder') {
         // loop through files under the folder
-        Logger.log('Found updated barcode %s at row %d. Start updating ... ', barcodes[i], i+2);
+        Logger.log('Found updated folder barcode %s at row %d. Start updating ... ', barcodes[i], i+3);
 
         var fileFolder = DriveApp.getFolderById(fileOrFolderId);
         var splittedChapters = fileFolder.getFiles();
