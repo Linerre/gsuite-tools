@@ -13,7 +13,7 @@
  * To debugg and test, turn on testing drive, spreadsheet and change YF to ME
  * 
  * Author: Errelin <zl37@nyu.edu>
- * Last Change: 2022-05-03
+ * Last Change: 2022-05-13
  */
 
 // convert their types to `const' later
@@ -73,13 +73,14 @@ function autoSaver() {
   // Since I care the latest one ONLY, so 50 would be far more than enough
   let queary = `from:${RPFILTER.FROM} newer_than:6d has:attachment subject:${RPFILTER.SUBJ}`;
   let threads = GmailApp.search(queary, 0, 50);
+  
   if (threads.length < 1) {
     Logger.log('No threads found meeting the search queary! Program terminates now');
     return null;
   }
 
-  if (threads.length > 1) {
-    Logger.log('Two threads found where only ONE is expected!')
+  if (threads.length >= 1) {
+    Logger.log('Probaly more than one threads have been found!')
 
     // The first contains the latest report
     for (let thread of threads) {
@@ -89,6 +90,14 @@ function autoSaver() {
       let weeklyRepExcelBlob = atts[0].copyBlob(); // this var's life circle matters
       // let weeklyRepExcelBlob = atts[0].getAs('GOOGLE_SHEETS'); // not supported
     
+      let attchName = weeklyRepExcelBlob.getName();
+      
+      // Skip monthly report
+      if (attchName.includes('MONTHLY')) {
+        Logger.log('Found monthly report. Store it in DRIVE but do nothing to it.\Storing DONE!');
+        continue;
+      }
+
       try {
         // Store the Excel report to the specific Drive folder; then
         // Convert it to google sheet
@@ -96,12 +105,6 @@ function autoSaver() {
         let targetFolder = DriveApp.getFolderById(RPFOLDER.ID);
         let weeklyRepExcel = targetFolder.createFile(weeklyRepExcelBlob);
         let weeklyRepExcelNameOrig = weeklyRepExcel.getName(); // NYUSH ORDER_REPORT.xlsx
-
-        // Skip monthly report
-        if (weeklyRepExcelNameOrig.includes('MONTHLY')) {
-          Logger.log('Found monthly report. Store it in DRIVE but do nothing to it.\Storing DONE!');
-          continue;
-        }
 
         let weeklyRepExcelNameNew = weeklyRepExcelNameOrig.replace('.', '-' + today.toLocaleDateString() + '.'); // NYUSH ORDER_REPORT - DATE.xlsx
       
