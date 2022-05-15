@@ -1,10 +1,10 @@
 /**
- * Detect all the orders that are either:
+ * Detect all the CDL orders that are either:
  * 1. waiting to be scanned for over 1 month or
  * 2. scanned but the physical copies are not back to KARMS within 1 month
  * 
- * Author: Errelin
- * Last Change: 2022-03-09
+ * Author: Errelin <zl37@nyu.edu>
+ * Last Change: 2022-05-25
  */
 
 const CDLINDEX = {
@@ -32,7 +32,7 @@ function longLeadtimeItems() {
   
   let trackingNotes = [];
   let vendorToScan = [];
-  let waitingForPrint = [];
+  // let waitingForPrint = [];
   
   for (let i = 0, n = items.length; i < n; i++) {
     let item = items[i];
@@ -54,7 +54,6 @@ function longLeadtimeItems() {
     // Yet to send to scan
     if (item[13] === '') {// Not paid vendor yet (N)
       if (item[8] !== '') {// Has tracking note
-        // Email YF or not?
         Logger.log('Have not paid vendor yet, at row %d. \nThe note is %s', i+129, item[8]);
         let tracked = {
           ORDERD    : item[11].toLocaleDateString(),
@@ -118,12 +117,12 @@ function longLeadtimeItems() {
   }
   Logger.log('These are items with Tracking notes: ');
   Logger.log(trackingNotes);
-  let header = `<p> A CDL order will be listed in this email if:\
+  let notice = '<p> A CDL order will be listed in this email if:</p>\
   <ol>\
   <li>Scanning Vendor Payment Date remians empty for at least one month <em>or</em></li>\
   <li>Vendor got paid but PDF Delivery Date remians empty for at least one month</li>\
-  </ol>\
-  <p>The following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a> need your attention:</p>`;
+  </ol>';
+  let sthToCheckHeader = `<p>The following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a> may need your attention:</p>`;
   let withTrackingNotes = tableConstruct(trackingNotes, 'tracking');
   let yetToScan = tableConstruct(vendorToScan, 'scan');
   // let printYetToArrive = tableConstruct(waitingForPrint, 'print');
@@ -131,14 +130,20 @@ function longLeadtimeItems() {
   let footer = '<p>You may want to copy the above table(s) and email Susan for updates.</p>\
   <p>You will receive the next such notificaiton one month from today.</p>\
   <p>See you then  ʕ·͡ᴥ·ʔ</p>';
+  let nothingToCheck = '<p><strong>There are no such CDL orders need checking at the moment.<strong><p>';
+  let body = '';
 
-  let body = header + withTrackingNotes + yetToScan + separator + footer;
+  if (withTrackingNotes == '<br>' && yetToScan == '<br>') {
+    body = notice +  nothingToCheck + separator + footer;
+  } else {
+    body = notice + sthToCheckHeader + withTrackingNotes + yetToScan + separator + footer;
+  };
 
-  GmailApp.sendEmail(USERS.YF, 'Long Waiting CDL Orders', 'Placeholder text', {
+  GmailApp.sendEmail(USERS.ME, 'Long Waiting CDL Orders', 'Placeholder text', {
     from: USERS.ME,
     name: 'Long-Waiting-CDL',
     // cc: USERS.ME,
-    cc: USERS.ME + ',' + USERS.YF,
+    cc: USERS.ME,
     htmlBody: body,
     noReply: true});
 
