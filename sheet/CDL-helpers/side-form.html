@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <style>
-  	* {
-  	  box-sizing: border-box;
-	}
+    	<style>
+  		* {
+  		  box-sizing: border-box;
+  		}
 
-  	body {
-	  font-family: Helvetica, sans-serif;
-	  font-size: 12pt;
-          color: #363534;
-  	}
+  		body {
+		    font-family: Helvetica, sans-serif;
+		    font-size: 12pt;
+        color: #363534;
+  		}
 
       .form-container {
         display: flex;
@@ -82,8 +82,8 @@
       </div>
 
       <div class="fields">
-        <label for="coll">Collection</label>
-        <select name="coll" id="coll">
+        <label for="coll">Collection<sup>*</sup></label>
+        <select name="coll" id="coll" required>
           <option value="Main" name="MAIN">Main</option>
           <option value="Reserves" name="RES">Reserves</option>
           <option value="Chinese" name="CHIL">Chinese</option>
@@ -95,13 +95,17 @@
 
       <div class="fields">
         <label for="due">Due Date</label>
-        <input type="date" name="due" id="due" value="2022-05-20">
+        <input type="date" name="due" id="due" value="2022-09-05">
       </div>
 
+      <div class="fields">
+        <label for="dtime">Due Time</label>
+        <input type="time" name="dtime" id="dtime" value="18:00">
+      </div>
     </div> 
 
       <button id="btn">LOAN</button>
-      <p> <span style="color:red;font-style:italic">*</span> indicates required fileds</p>
+      <p> <span style="color:red">*</span> indicates required fileds</p>
    </div>
    
    
@@ -113,11 +117,11 @@
       let netid = document.getElementById('netid').value;
       let staff = document.getElementById('staff').value;
       let coll = document.getElementById('coll').value;
-      let due = document.getElementById('due').value.toString();
-
+      let dueDate = document.getElementById('due').value.toString();
+      let dueTime = document.getElementById('dtime').value.toString();
       try {
         // fn for loan; consider adding err handler later
-        google.script.run.loanCDL(trow, netid, staff, coll, due);
+        google.script.run.loanCDL(trow, netid, staff, coll, dueDate, dueTime);
 
         google.script.run.toast();
 
