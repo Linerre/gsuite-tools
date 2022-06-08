@@ -1,17 +1,16 @@
 /**
  * The entry point function which loans a CDL item and record the loan.
  * Author: Errelin <zl37@nyu.edu>
- * Last Change: 2022-05-11
+ * Last Change: 2022-06-08
  */
 
-
-function loanCDL(trow, netid, staff, coll, dueDate) {
+function loanCDL(trow, netid, staff, coll, dueDate, dueTime) {
   let fileUrl = vendorCDLSheet.getRange(trow, 5).getValue();
   let title = vendorCDLSheet.getRange(trow, 6).getValue();
   let barcode = vendorCDLSheet.getRange(trow, 10).getValue();
   let author = vendorCDLSheet.getRange(trow, 19).getValue();
-
-  let dueTime = " 18:00";
+  let due = dueDate + ' ' + dueTime;
+  // let dueTime = " 18:00";
   // let fileIdPat = fileUrl.match(/[-\w]{25,}|[-\d]{10}/);
   let fileIdPat = fileUrl.match(/[-\w]{25,}/);
   let fileId = fileIdPat.length == 1 ? fileIdPat[0] : null;
@@ -32,15 +31,15 @@ function loanCDL(trow, netid, staff, coll, dueDate) {
   Logger.log('Start checking out the item to patron %s', netid);
 
   
-  updateFilePermission(netid, fileId);
+  updateFilePermission(netid.toLowerCase(), fileId);
 
   
-  notifyPatron(patronEmail, title, author, fileUrl, dueDate + dueTime);
-  recordLoan(fileUrl, dueDate + dueTime, fileName, barcode, patronEmail, coll, staff);
-
+  notifyPatron(patronEmail, title, author, fileUrl, due);
+  recordLoan(fileUrl, due, fileName, barcode, patronEmail, coll, staff);
+  
   // also record the due date on vendor sheet at the same time for convenience
-  vendorCDLSheet.getRange(trow,3).setValue(dueDate);
-  Logger.log('DONE! Due date is %s', dueDate + dueTime);
+  vendorCDLSheet.getRange(trow,3).setValue(due);
+  Logger.log('DONE! Due date is %s', due);
   
 }
 
@@ -75,7 +74,7 @@ function notifyPatron(patronEmail, title, author, cdlUrl, dueTimeStr) {
       <p>Best regards,<br>NYU Shanghai Library Access Services</p>';
       
   Logger.log(body);
-  MailApp.sendEmail(recipient, subject, '', {cc: 'shanghai.circulation@nyu.edu', htmlBody: body, noReply: true});
+  MailApp.sendEmail(recipient, subject, '', {htmlBody: body, noReply: true});
 }
 
 function toast() {
