@@ -4,7 +4,7 @@
  * 2. scanned but the physical copies are not back to KARMS within 1 month
  * 
  * Author: Errelin <zl37@nyu.edu>
- * Last Change: 2022-05-25
+ * Last Change: 2022-06-24
  */
 
 const CDLINDEX = {
@@ -14,12 +14,13 @@ const CDLINDEX = {
 
 const USERS = {
   ME: 'zl37@nyu.edu',
-  YF: 'yz8212@nyu.edu'
+  YF: 'YF'
 };
 
 function longLeadtimeItems() {
   let range = vendorCDLSheet.getRange(129, 1, vendorCDLSheet.getLastRow(), vendorCDLSheet.getLastColumn());
   let items = range.getValues().filter(items => items[0].length > 1);
+  // Logger.log(items);
   let averageLeadtime = vendorCDLSheet.getRange(1,10).getValue();
 
   Logger.log('The avarege lead time is %d', Math.round(averageLeadtime));
@@ -36,8 +37,8 @@ function longLeadtimeItems() {
   
   for (let i = 0, n = items.length; i < n; i++) {
     let item = items[i];
-    // Skip cancelled or physically arrived titles
-    if (item[1] == 'Cancelled' || item[0] == 'CDL Silent') {
+    // Skip cancelled, physically arrived, DVD, non-CDL, vendor-scanning-date-unavailable titles
+    if ( item[0] == 'CDL Silent' || items[0] == 'Non-CDL' || items[1] == 'DVD' || item[1] == 'Canceled' || item[13] == '/') {
       continue;
     }
 
@@ -52,7 +53,7 @@ function longLeadtimeItems() {
     // let reqDay = req.getDate();
     
     // Yet to send to scan
-    if (item[13] === '') {// Not paid vendor yet (N)
+    if (item[13] == '') {// Not paid vendor yet (N)
       if (item[8] !== '') {// Has tracking note
         Logger.log('Have not paid vendor yet, at row %d. \nThe note is %s', i+129, item[8]);
         let tracked = {
@@ -67,7 +68,11 @@ function longLeadtimeItems() {
       } 
     } else {// Paid vendor: item[13] !== ''
       if (item[14] == '' && item[8] == '') {// but has NOT got PDF and has NO tracking note
-        let paid = item[13]
+        let paid = item[13];
+        // Logger.log('Entered this branch');
+        // Logger.log(i);
+        // Logger.log(paid);
+        // return;
         let paidYear = paid.getFullYear();
         let paidMonth = paid.getMonth() + 1;
         let paidDay = paid.getDate();
@@ -119,8 +124,8 @@ function longLeadtimeItems() {
   Logger.log(trackingNotes);
   let notice = '<p> A CDL order will be listed in this email if:</p>\
   <ol>\
-  <li>Scanning Vendor Payment Date remians empty for at least one month <em>or</em></li>\
-  <li>Vendor got paid but PDF Delivery Date remians empty for at least one month</li>\
+  <li><strong>Scanning Vendor Payment Date</strong> remians empty for at least one month <em>or</em></li>\
+  <li>Vendor got paid but <strong>PDF Delivery Date</strong> remians empty for at least one month</li>\
   </ol>';
   let sthToCheckHeader = `<p>The following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a> may need your attention:</p>`;
   let withTrackingNotes = tableConstruct(trackingNotes, 'tracking');
@@ -128,9 +133,9 @@ function longLeadtimeItems() {
   // let printYetToArrive = tableConstruct(waitingForPrint, 'print');
   let separator = '<p style="margin-top:20px">-----------------------------------</p>'
   let footer = '<p>You may want to copy the above table(s) and email Susan for updates.</p>\
-  <p>You will receive the next such notificaiton one month from today.</p>\
+  <p>You will receive the next such notificaiton on next Friday.</p>\
   <p>See you then  ʕ·͡ᴥ·ʔ</p>';
-  let nothingToCheck = '<p><strong>There are no such CDL orders need checking at the moment.<strong><p>';
+  let nothingToCheck = '<p>There are <strong>no</strong> such CDL orders need checking at the moment.<p>';
   let body = '';
 
   if (withTrackingNotes == '<br>' && yetToScan == '<br>') {
@@ -139,10 +144,9 @@ function longLeadtimeItems() {
     body = notice + sthToCheckHeader + withTrackingNotes + yetToScan + separator + footer;
   };
 
-  GmailApp.sendEmail(USERS.ME, 'Long Waiting CDL Orders', 'Placeholder text', {
+  GmailApp.sendEmail(USERS.YF, 'Long Waiting CDL Orders', 'Placeholder text', {
     from: USERS.ME,
     name: 'Long-Waiting-CDL',
-    // cc: USERS.ME,
     cc: USERS.ME,
     htmlBody: body,
     noReply: true});
