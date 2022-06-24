@@ -93,7 +93,7 @@ function transformRowToHash(rows) {
   return onloans;
 }
 
-// run every 12 hours
+// run every 8 hours
 function removeDueDate() {
   var logSwitch = 0;
   var status = {};
