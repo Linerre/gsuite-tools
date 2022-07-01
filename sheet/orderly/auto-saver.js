@@ -13,7 +13,7 @@
  * To debugg and test, turn on testing drive, spreadsheet and change YF to ME
  * 
  * Author: Errelin <zl37@nyu.edu>
- * Last Change: 2022-05-13
+ * Last Change: 2022-07-01
  */
 
 // convert their types to `const' later
@@ -211,14 +211,14 @@ function notifier(cdledtable, draftBody, fromWhom, toWhom) {
   let orderRep = `<p>The Order Report of this week has been processed and updated to <strong>Sheet3</strong> of \
       <a href="${SHIPFIRST.URL}">Books for KARMS shipping prioritized</a></p>`;
   let draftNoty = '<p>A message to Susan has been stored or updated in your Draft with the title <strong>Orders to Prioritize</strong>.</p>';
-  let noOrderNoty = '<p>There are <b>no</b> Non-CDL orders to check with Susan this week.</p>';
-  let cdlIndexRep = '<p>There are <b>no</b> CDL orders to check with Susan this week.</p>'; 
+  let noOrderNoty = '<p>There are <b>no</b> Non-CDL orders to check with NY this week.</p>';
+  let cdlIndexRep = '<p>There are <b>no</b> CDL orders to check with NY this week.</p>'; 
   let tableFooter = '</tbody></table>';
   let wishing = '<p style="margin-top: 20px">Have a nice weekend, young lady ٩(^ᴗ^)۶</p>'
 
   if (cdledtable !== '<br>') {
     cdlIndexRep = '<br><br><p>------------------------</p>' 
-    + `<p>Before emailing Susan, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a>.</p>`;
+    + `<p>Before contacting NY, you may want to check the following CDL orders on <a href="${CDLINDEX.URL}">CDL Index</a>.</p>`;
   };
 
   if (draftBody != '<br><br><br>') {
