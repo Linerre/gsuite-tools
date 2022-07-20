@@ -9,7 +9,8 @@
 
 const CDLINDEX = {
   ID    : '1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao',
-  URL   : 'https://docs.google.com/spreadsheets/d/1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao/edit?usp=sharing'
+  URL   : 'https://docs.google.com/spreadsheets/d/1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao/edit?usp=sharing',
+  ROW   : 130
 }
 
 const USERS = {
@@ -55,7 +56,7 @@ function longLeadtimeItems() {
     // Yet to send to scan
     if (item[13] == '') {// Not paid vendor yet (N)
       if (item[8] !== '') {// Has tracking note
-        Logger.log('Have not paid vendor yet, at row %d. \nThe note is %s', i+129, item[8]);
+        Logger.log('Have not paid vendor yet, at row %d. \nThe note is %s', i+CDLINDEX.ROW, item[8]);
         let tracked = {
           ORDERD    : item[11].toLocaleDateString(),
           TITLE     : item[5],
@@ -79,7 +80,7 @@ function longLeadtimeItems() {
 
         if (inYear - paidYear >= 1) {// Paid in the past year(s)
           if (12 - paidMonth + inMonth > 1) {// and waiting for more than 2 month
-            Logger.log('Waiting for PDF for over 1 month at row %d', i+129);
+            Logger.log('Waiting for PDF for over 1 month at row %d', i+CDLINDEX.ROW);
             let toscan = {
               ORDERD    : item[11].toLocaleDateString(),
               TITLE     : item[5],
@@ -90,7 +91,7 @@ function longLeadtimeItems() {
             };
             vendorToScan.push(toscan);
           } else if ((12 - paidMonth + inMonth == 1) && (31 - paidDay + ondDay > 30)) {// waiting for more than 1 month but not as long as 2
-              Logger.log('Waiting for PDF for over 1 month at row %d', i+129);
+              Logger.log('Waiting for PDF for over 1 month at row %d', i+CDLINDEX.ROW);
               let toscan = {
                 ORDERD    : item[11].toLocaleDateString(),
                 TITLE     : item[5],
@@ -103,7 +104,7 @@ function longLeadtimeItems() {
           }
         } else if (inYear - paidYear == 0) { // Paid in the same year
             if ((inMonth - paidMonth > 1) && (31 - paidDay + ondDay > 30)) {
-              Logger.log('Waiting for PDF over 1 month at row %d', i+129);
+              Logger.log('Waiting for PDF over 1 month at row %d', i+CDLINDEX.ROW);
               let toscan = {
                 ORDERD    : item[11].toLocaleDateString(),
                 TITLE     : item[5],
