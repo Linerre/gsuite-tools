@@ -19,7 +19,8 @@
 // convert their types to `const' later
 const RPFILTER = {
   // FROM    : 'errelinaaron@gmail.com',
-  FROM    : 'lib-dba@nyu.edu',
+  FROM : 'leon.errelin@outlook.com',
+  // FROM    : 'lib-dba@nyu.edu',
   TO      : 'me',
   SUBJ    : 'Shanghai Order Report',
   HAS     : ['attachment'],  // for future extensibility
@@ -33,8 +34,8 @@ const RPFILTER = {
  * */ 
 
 const RPFOLDER = {
-  ID      : '1_tjeJsVK62crqclh2t0M9awzOFRPq9GV', // Real
-  // ID      : '12XwFii9q5qTwS-8KUDxEdsmaGxOTNofS', // My Test Drive
+  // ID      : '1_tjeJsVK62crqclh2t0M9awzOFRPq9GV', // Real
+  ID      : '1nR_gAAe412l6y1pOLjL5hrbXZrN-N-4n', // My Test Drive
   NAME    : 'Weekly Order Report',
   OWNER   : 'zl37@nyu.edu'
 };
@@ -51,18 +52,21 @@ const SHIPFIRST = {
 };
 
 const CDLINDEX = {
-  ID   :  '1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao',
+  ID   :  '1RxEJAQkOah0xLKTTUF2bvXrgKYmHYrtrOPwwkLjQHZ4',
+  // ID   :  '1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao',
   URL  :  'https://docs.google.com/spreadsheets/d/1DpgC__qjQmxrY1Mltm2OKl-tDn-1w4pFsSiKXZPV1ao/edit?usp=sharing',
+  NOT  :  {NAME: 'DONTTOUCH', INDEX: 1},
   VEND :  {NAME: 'Vendor CDL', INDEX: 0}
 };
 
 const USERS = {
-  ME: 'zl37@nyu.edu',
+  // ME: 'zl37@nyu.edu',
+  ME: 'errelinaaron@gmail.com',
   YF: 'yz8212@nyu.edu',
   NB: ''
 };
 
-// Run daily
+// Run on Fridays
 /**
  * How to decide whether or not the report email has been checked?
  * 1. Use labels (+ isRead)
@@ -201,6 +205,39 @@ function colExtracter(spreadsheetID) {
 
   Logger.log('Deleting tmp sheet on src spreadsheet...')
   srcSpreadsheet.deleteSheet(tmpSht);
+  
+  /**
+   * For order date colunm on CDL Index
+   * 
+   * FROM: | Q-Z68_OPEN_DATE | W-Z68_ORDER_NUMBER |
+   *               17                    23
+   * TO:   | W-Z68_ORDER_NUMBER | Q-Z68_OPEN_DATE |
+   *               1                     2
+   * 
+   * 2. Copy the entire sheet to the CDL Index's DONTTOUCH tab
+   */
+
+  // CDL vendor sheet
+  let vLookTmpSht = srcSpreadsheet.insertSheet('vlook');
+  let vLookCols = ['W:W', 'Q:Q'];
+  for (let i = 0, n = vLookCols.length; i < n; i++) {
+    srcSht.getRange(vLookCols[i]).copyTo(vLookTmpSht.getRange(1,i+1));
+  }
+  vLookTmpSht.getDataRange().trimWhitespace();
+
+  // Copy VLookup Cols to the DONTTOUCH Sheet
+  Logger.log('Copying Vlook sheet contents to the DONTTOUCH Sheet...');
+  let cdlSpreadSht = SpreadsheetApp.openById(CDLINDEX.ID);
+  let dontTouchSht = cdlSpreadSht.getSheetByName(CDLINDEX.NOT.NAME);
+  let tmpDontTouchSht = vLookTmpSht.copyTo(cdlSpreadSht); 
+  
+  Logger.log('Copying data from Temporary VLOOKUP sheet to DONTTOUCH...');
+  tmpDontTouchSht.getRange('A:A').copyTo(dontTouchSht.getRange('A:A'));
+  tmpDontTouchSht.getRange('B:B').copyTo(dontTouchSht.getRange('B:B'));
+  Logger.log('Cleaning temporary sheets ...');
+  srcSpreadsheet.deleteSheet(vLookTmpSht);
+  cdlSpreadSht.deleteSheet(tmpDontTouchSht);
+  Logger.log('DONE!\nCDL Index Order Dates get updated successfully!');
   
   return destSpreadsheet.getUrl();
 
