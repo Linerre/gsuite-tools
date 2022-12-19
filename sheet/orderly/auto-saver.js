@@ -13,7 +13,7 @@
  * To debugg and test, turn on testing drive, spreadsheet and change YF to ME
  * 
  * Author: Errelin <zl37@nyu.edu>
- * Last Change: 2022-07-01
+ * Last Change: 2022-12-19
  */
 
 // convert their types to `const' later
@@ -131,14 +131,14 @@ function autoSaver() {
         // Extract the needed columns from the excel-turned sheet
         colExtracter(spreadsheet.id);
 
-        // filter order and generate email to Susan in draft
-        let tables = filterCDLs();
-
+        // filter order and generate email to NY in draft, and then
         // Notify YF everything is done
         // draft is ready
         // CDL Index result
         // spreadsheet urls
+        let tables = filterCDLs();
         notifier(tables.CDLTABLE, tables.DRAFT, USERS.YF, USERS.YF);
+        
       } catch(err) {
         Logger.log(err);
       }  
@@ -164,14 +164,14 @@ function colExtracter(spreadsheetID) {
   /**
    * 1. Copy the needed columns to Books for KARMS shipping prioritized
    * 
-   * FROM: | W-Z68_ORDER_NUMBER | B-Z13_TITLE | G-Z30_BARCODE | D-Z71_OPEN_DATE | H-Z30_ITEM_PROCESS_STATUS | M-Z30_PROCESS_STATUS_DATE |
-   *                  17               2             7                   4                 8                            10
-   * TO:   | A-Z68_ORDER_NUMBER | B-Z13_TITLE | D-Z30_BARCODE | E-Z71_OPEN_DATE | F-Z30_ITEM_PROCESS_STATUS | G-Z30_PROCESS_STATUS_DATE |
-   *                  1                2             3                   4                 5                             6 
+   * FROM: | W-Z68_ORDER_NUMBER | B-Z13_TITLE | G-Z30_BARCODE | D-Z71_OPEN_DATE | H-Z30_ITEM_PROCESS_STATUS | M-Z30_PROCESS_STATUS_DATE | AC-LIB_NOTEs |
+   *                  23               2             7                   4                 8                            10                      29
+   * TO:   | A-Z68_ORDER_NUMBER | B-Z13_TITLE | D-Z30_BARCODE | E-Z71_OPEN_DATE | F-Z30_ITEM_PROCESS_STATUS | G-Z30_PROCESS_STATUS_DATE | H-LIB_NOTES  |
+   *                  1                2             3                   4                 5                             6                       7
    * 
    * 2. Copy the entire sheet to the dest spreadsheet
    */
-  let srcCols = ['W:W', 'B:B', 'G:G', 'D:D', 'H:H', 'M:M'];
+  let srcCols = ['W:W', 'B:B', 'G:G', 'D:D', 'H:H', 'M:M', 'AC:AC'];
   for (let i = 0, n = srcCols.length; i < n; i++) {
     srcSht.getRange(srcCols[i]).copyTo(tmpSht.getRange(1,i+1));
   }
