@@ -197,7 +197,7 @@ function colExtracter(spreadsheetID) {
   // Change A2 to A1 if you want to copy over the header row as well
   // Since header row does not change, so there is no need to do so now
   tmpSht3.getRange('A2:B').copyTo(destSht.getRange('A2:B'));
-  tmpSht3.getRange('C2:F').copyTo(destSht.getRange('D2:G'));
+  tmpSht3.getRange('C2:G').copyTo(destSht.getRange('D2:H'));
 
   Logger.log('Copying DONE!\nDeleting tmp sheet on dest spreadsheet...')
   // delete tmp sheet
