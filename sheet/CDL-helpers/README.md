@@ -94,7 +94,7 @@ Indeed, I have did a simple test: ask each of two junior asscoiates to perform t
 I created a GUI for automating all the steps above:
 ![Loan CDL](https://github.com/Linerre/gsuite-tools/blob/master/loan-CDL.png)
 
-The only needed information is the first three fields:
+The only required information is the first three fields:
 1. On which row the tilte is going to be loaned out?
 2. What's the patron's ID?
 3. Who is doing this operation? (Staff initials)
