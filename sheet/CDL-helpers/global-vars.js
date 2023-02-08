@@ -15,7 +15,7 @@ var circFiles = circFilesFolder.getFiles();
 var circFolders = circFilesFolder.getFolders();
 
 // Vendor CDL Sheet
-const vendorCDLSheet = SpreadsheetApp.openById('sheetID').getSheetByName('Vendor CDL');
+const vendorCDLSheet = SpreadsheetApp.openById('sheetID').getSheetByName('CDL');
 
 // Local CDL Sheet
 const localCDLSheet = SpreadsheetApp.openById('sheetID').getSheetByName('Local CDL');
