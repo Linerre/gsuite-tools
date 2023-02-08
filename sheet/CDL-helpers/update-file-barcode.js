@@ -10,7 +10,7 @@
  * This script tries to solve the problem and reduce the manual work of sync-ing.
  *
  * Author: Errelin <zl37@nyu.edu>
- * Date: 2022-05-13
+ * Date: 2023-02-07
  */
 
 function updateFileBarcode() 
@@ -31,7 +31,7 @@ function updateFileBarcode()
 
 
   // In case the linked source spreasheet gets changed (say, one more col is inserted)
-  if (vendorBarcodeColHeader !== 'Barcode') {
+  if !(vendorBarcodeColHeader.startsWith('Barcode')) {
     Logger.log('Barcode Column moved! Execution terminated to protect the original data!');
     return
   }
