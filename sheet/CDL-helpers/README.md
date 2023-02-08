@@ -99,4 +99,4 @@ The only required information is the first three fields:
 2. What's the patron's ID?
 3. Who is doing this operation? (Staff initials)
 
-Then, be it sending the eamil notification, sharing the file, or recording the loan, all has been automated. The run of the script takes about 10 seconds.
+Then, be it sending the email notification, sharing the file, or recording the loan, all has been automated. The run of the script takes about 10 seconds.
