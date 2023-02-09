@@ -31,7 +31,7 @@ function updateFileBarcode()
 
 
   // In case the linked source spreasheet gets changed (say, one more col is inserted)
-  if !(vendorBarcodeColHeader.startsWith('Barcode')) {
+  if (!vendorBarcodeColHeader.startsWith('Barcode')) {
     Logger.log('Barcode Column moved! Execution terminated to protect the original data!');
     return
   }
