@@ -51,12 +51,11 @@ function updateFileBarcode()
       // Logger.log('No barcode or no vendor file block gets executed');
       Logger.log(
         'File at row %d has not been uploaded to Drive or the order was cancelled. \nIt could also be a DVD.\nFile title is %s', 
-        i+2, 
+        i+3, 
         vendorTitles[i]
         );
     }
     // if circUrl, barcode exits on sheet, but barcode not in drive, then update the barcode in drive using that on sheet
-    // TODO: may need to extend barcode length to 14 digits
     // URL column could contain a slash, so check its content length instead of if it is empty
     if (circUrlVendorSheet[i].length > 10 && barcodes[i].length > 5 && barcodeUrl[barcodes[i]] == undefined) {
       var fileType = (circUrlVendorSheet[i].search(/file\/d/) > 0) ? 'file' : 'folder';
