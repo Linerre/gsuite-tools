@@ -15,12 +15,12 @@
 
 function addCircFileUrl()
 {
-  var circUrl = (activeSheetName == 'Vendor CDL') ? circUrlVendorSheet : circUrlLocalSheet;
+  var circUrl = (activeSheetName == 'CDL') ? circUrlVendorSheet : circUrlLocalSheet;
   // Logger.log('Now on the sheet: %s', activeSheetName);
   // Logger.log(circUrl);
   // Logger.log(circUrlVendorSheet);
-  var sheet = (activeSheetName == 'Vendor CDL') ? vendorCDLSheet : localCDLSheet;
-  var barcodes = (activeSheetName == 'Vendor CDL') ? vendorBarcodes : localBarcodes;
+  var sheet = (activeSheetName == 'CDL') ? vendorCDLSheet : localCDLSheet;
+  var barcodes = (activeSheetName == 'CDL') ? vendorBarcodes : localBarcodes;
 
   // get a combined/merged hash table
   // otherwise the file obj will have null items which were indeed folders
