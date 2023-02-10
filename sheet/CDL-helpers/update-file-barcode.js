@@ -54,7 +54,7 @@ function updateFileBarcode()
   // loop through barcodes and find those that differ from files
   for (let i = 0, n = barcodes.length; i < n; i++) {
     // if no barcode or circUrl; then the circ copy has not been uploaded yet; skip over
-    if ((barcodes[i].length < 5) || (barcodes[i] > 5 && (circUrlVendorSheet[i] == '' || circUrlVendorSheet[i] == '/' || circUrlVendorSheet[i] == ' '))) {
+    if ((barcodes[i].length < 5) || (barcodes[i].length > 5 && (circUrlVendorSheet[i] == '' || circUrlVendorSheet[i] == '/' || circUrlVendorSheet[i] == ' '))) {
       // Logger.log('No barcode or no vendor file block gets executed');
       Logger.log(
         'File at row %d has not been uploaded to Drive or the order was cancelled. \nIt could also be a DVD.\nFile title is %s', 
