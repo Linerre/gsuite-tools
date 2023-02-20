@@ -148,7 +148,6 @@ function longLeadtimeItems() {
   GmailApp.sendEmail(USERS.YF, 'Long Waiting CDL Orders', 'Placeholder text', {
     from: USERS.ME,
     name: 'Long-Waiting-CDL',
-    cc: USERS.ME,
     htmlBody: body,
     noReply: true});
 
